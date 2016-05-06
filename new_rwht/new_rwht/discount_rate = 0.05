@@ -1,0 +1,60 @@
+            def pv_total_costs(year, volume):
+# OUT:   File "<input>", line 2
+# OUT:     def pv_total_costs(year, volume):
+# OUT:     ^
+# OUT: IndentationError: unexpected indent
+                try:
+# OUT:   File "<input>", line 2
+# OUT:     try:
+# OUT:     ^
+# OUT: IndentationError: unexpected indent
+                    return construction_costs(year, volume) + maintenance_costs()
+# OUT:   File "<input>", line 2
+# OUT:     return construction_costs(year, volume) + maintenance_costs()
+# OUT:     ^
+# OUT: IndentationError: unexpected indent
+                except (LookupError):
+# OUT:   File "<input>", line 2
+# OUT:     except (LookupError):
+# OUT:     ^
+# OUT: IndentationError: unexpected indent
+                    raise ValueError("can't calculate total costs")
+# OUT:   File "<input>", line 2
+# OUT:     raise ValueError("can't calculate total costs")
+# OUT:     ^
+# OUT: IndentationError: unexpected indent
+
+
+def pv_total_costs(year, volume):
+    try:
+        return construction_costs(year, volume) + maintenance_costs()
+                    except (LookupError):
+# OUT:   File "<input>", line 5
+# OUT:     except (LookupError):
+# OUT:     ^
+# OUT: IndentationError: unexpected indent
+def pv_total_costs(year, volume):
+                try:
+                    return construction_costs(year, volume) + maintenance_costs()
+                except (LookupError):
+                    raise ValueError("can't calculate total costs")
+                
+            
+        
+    
+
+print type(pv_total_cost)
+# OUT: Traceback (most recent call last):
+# OUT:   File "<input>", line 1, in <module>
+# OUT: NameError: name 'pv_total_cost' is not defined
+print type(pv_total_cost())
+# OUT: Traceback (most recent call last):
+# OUT:   File "<input>", line 1, in <module>
+# OUT: NameError: name 'pv_total_cost' is not defined
+def fun():
+    return 4
+
+type(fun())
+# OUT: <type 'int'>
+type(fun)
+# OUT: <type 'function'>
