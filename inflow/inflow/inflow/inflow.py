@@ -9,7 +9,7 @@ from random import *
 
 class inflow(Module):
         display_name = "inflow"
-        group_name = "test"
+        group_name = "ABM"
         """
         Module Initialisation
         """

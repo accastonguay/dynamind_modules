@@ -9,7 +9,7 @@ from random import *
 
 class ResidentialUnits(Module):
         display_name = "Residential Units"
-        group_name = "Decisions"
+        group_name = "ABM"
         """
         Module Initialisation
         """

@@ -8,7 +8,7 @@ from osgeo import ogr
 
 class Restrictions(Module):
         display_name = "Restrictions"
-        group_name = "Decisions"
+        group_name = "ABM"
         """
         Module Initialisation
         """

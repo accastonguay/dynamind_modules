@@ -9,7 +9,7 @@ import numpy as np
 
 class WaterPrice(Module):
         display_name = "price"
-        group_name = "ABM"
+        group_name = "test"
         """
         Module Initialisation
         """

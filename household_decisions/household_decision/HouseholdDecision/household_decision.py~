@@ -3,12 +3,13 @@ __author__ = 'acharett'
 
 from pydynamind import *
 from osgeo import ogr
-import math
+from random import *
 
 
-class education(Module):
-        display_name = "Education campaign"
-        group_name = "ABM"
+
+class HouseholdDecision(Module):
+        display_name = "Households"
+        group_name = "Decisions"
         """
         Module Initialisation
         """
@@ -19,20 +20,18 @@ class education(Module):
             self.setIsGDALModule(True)
             #Parameter Definition
 
-            self.createParameter("education", DOUBLE)
-            self.education = 1
+            # self.createParameter("restriction", INT)
 
 
-            self.city = ViewContainer("city", COMPONENT, READ)
-            self.city.addAttribute("dam_volume", Attribute.DOUBLE, READ)
-            self.city.addAttribute("education", Attribute.DOUBLE, WRITE)
-
+            self.household = ViewContainer("household", COMPONENT, READ)
+            self.household.addAttribute("restriction", Attribute.INT, READ)
+            self.household.addAttribute("raintank", Attribute.INT, WRITE)
 
 
             #Compile views
             views = []
             # views.append(self.city_council)
-            views.append(self.city)
+            views.append(self.household)
             # views.append(self.city_environment)
 
 
@@ -54,26 +53,31 @@ class education(Module):
             #Data Stream Manipulation
 
             #print self.my_parameter
-            self.city.reset_reading()
+            self.household.reset_reading()
             # self.city_environment.reset_reading()
-            for b in self.city:
-                volume = b.GetFieldAsDouble("dam_volume")
-
-
-                def bass(N,p,q,t):
-                    result = N*((1-math.exp(-(p+q)*t))/(1+(q/p)*math.exp(-(p+q)*t)))
-                    return result
-                # edu = 1+(200+-bass(200,0.000025,0.01,volume))/100
-                edu = 1+(100+-bass(100,0.000025,0.01,volume))/100
-
-                b.SetField("education", edu)
-
-
-
-            self.city.finalise()
-
-
-
+            for b in self.household:
+                raintank = b.GetFieldAsInteger("raintank")
+                restriction = b.GetFieldAsInteger("restriction")
+                if raintank == 0:
+                    if restriction == 0:
+                        if random() < 0.01:
+                            b.SetField("raintank", 1)
+                            # print 'the raintank is 0'
+                        else:
+                            b.SetField("raintank", 0)
+                    elif restriction == 1:
+                        if random() < 0.03:
+                            b.SetField("raintank", 1)
+                            # print 'the raintank is 0'
+                        else:
+                            b.SetField("raintank", 0)
+                    elif restriction == 2:
+                        if random() < 0.06:
+                            b.SetField("raintank", 1)
+                            # print 'the raintank is 0'
+                        else:
+                            b.SetField("raintank", 0)
+            self.household.finalise()
 
 
             #     self.city.restriction=0
@@ -118,3 +122,6 @@ class education(Module):
                 #     elif 575000 >= d_v:
                 #         self.restriction = 2
                 #         c.SetField("restriction", self.restriction)
+
+
+            # self.city_environment.finalise()

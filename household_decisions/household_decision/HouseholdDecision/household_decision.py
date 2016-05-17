@@ -9,7 +9,7 @@ from random import *
 
 class HouseholdDecision(Module):
         display_name = "Households"
-        group_name = "Decisions"
+        group_name = "ABM"
         """
         Module Initialisation
         """
@@ -19,22 +19,29 @@ class HouseholdDecision(Module):
             #To use the GDAL API
             self.setIsGDALModule(True)
             #Parameter Definition
+            self.createParameter("rule", INT)
+            self.rule = 1
+            self.rwht_option = ViewContainer("rwht_option", COMPONENT, READ)
 
-            # self.createParameter("restriction", INT)
+            self.rwht_option.addAttribute("volume", Attribute.DOUBLE, READ)
+            self.rwht_option.addAttribute("parcel_id", Attribute.INTEGER, READ)
+
+            self.rwht_option.addAttribute("incentive", Attribute.DOUBLE, READ)
+            self.rwht_option.addAttribute("wtp", Attribute.DOUBLE, READ)
+            # self.rwht_option.addAttribute("ogc_fid", Attribute.DOUBLE, READ)
 
 
-            self.household = ViewContainer("household", COMPONENT, READ)
-            self.household.addAttribute("restriction", Attribute.INT, READ)
-            self.household.addAttribute("raintank", Attribute.INT, WRITE)
+            self.rwht_option.addAttribute("pv_indoor", Attribute.DOUBLE, READ)
+            self.rwht_option.addAttribute("pv_outdoor", Attribute.DOUBLE, READ)
+            self.rwht_option.addAttribute("placed", Attribute.DOUBLE, WRITE)
+            self.rwht_option.addAttribute("plumbed", Attribute.DOUBLE, WRITE)
+
+            # self.rwht_option.addAttribute("plumbed", Attribute.DOUBLE, READ)
 
 
             #Compile views
             views = []
-            # views.append(self.city_council)
-            views.append(self.household)
-            # views.append(self.city_environment)
-
-
+            views.append(self.rwht_option)
             #Register ViewContainer to stream
             self.registerViewContainers(views)
 
@@ -53,75 +60,46 @@ class HouseholdDecision(Module):
             #Data Stream Manipulation
 
             #print self.my_parameter
-            self.household.reset_reading()
-            # self.city_environment.reset_reading()
-            for b in self.household:
-                raintank = b.GetFieldAsInteger("raintank")
-                restriction = b.GetFieldAsInteger("restriction")
-                if raintank == 0:
-                    if restriction == 0:
-                        if random() < 0.01:
-                            b.SetField("raintank", 1)
-                            # print 'the raintank is 0'
-                        else:
-                            b.SetField("raintank", 0)
-                    elif restriction == 1:
-                        if random() < 0.03:
-                            b.SetField("raintank", 1)
-                            # print 'the raintank is 0'
-                        else:
-                            b.SetField("raintank", 0)
-                    elif restriction == 2:
-                        if random() < 0.06:
-                            b.SetField("raintank", 1)
-                            # print 'the raintank is 0'
-                        else:
-                            b.SetField("raintank", 0)
-            self.household.finalise()
+            self.rwht_option.reset_reading()
+            parcel_seen = []
+            parcel_number =[]
+            for r in self.rwht_option:
+
+                # Calculate PV for indoor use
+                i = r.GetFieldAsDouble("incentive")
+                v = r.GetFieldAsDouble("volume")
+                wtp = r.GetFieldAsDouble("wtp")
+                pv_indoor = r.GetFieldAsDouble("pv_indoor")
+                pv_outdoor = r.GetFieldAsDouble("pv_outdoor")
+                id = r.GetFieldAsInteger("parcel_id")
 
 
-            #     self.city.restriction=0
-            # elif 980000 >= self.city_environment.dam_volume > 575000:
-            #     self.city.restriction=1
-            # elif 575000 >= self.city_environment.dam_volume:
-            #     self.city.restriction=2
-
-            # if city_environment.GetFieldAsDouble("dam_volume") > 980000:
-            #     self.city.restriction=0
-            # elif 980000 >= city_environment.GetFieldAsDouble("dam_volume") > 575000:
-            #     self.city.restriction=1
-            # elif 575000 >= city_environment.GetFieldAsDouble("dam_volume"):
-            #     self.city.restriction=2
+                if len(parcel_number) == 3:
+                else:
+                    dict['indoor':{v:pv_indoor}]
+                    dict['outdoor':{v:pv_indoor}]
 
 
-            # for c_e in self.city_environment:
-            #     d_v = c_e.GetFieldAsDouble("dam_volume")
-            #     for c in self.city:
-            #         r = c.GetFieldAsDouble("restriction")
-            #         if d_v > 980000:
-            #             self.restriction = 0
-            #             c.SetField("restriction", self.restriction)
-            #         elif 980000 >= d_v > 575000:
-            #             self.restriction = 1
-            #             c.SetField("restriction", self.restriction)
-            #         elif 575000 >= d_v:
-            #             self.restriction = 2
-            #             c.SetField("restriction", self.restriction)
 
-            # for c_e in self.city_environment:
-            #     d_v = c_e.GetFieldAsDouble("dam_volume")
-            #     print d_v
-                # for c in self.city:
-                #     r = c.GetFieldAsDouble("restriction")
-                #     if d_v > 980000:
-                #         self.restriction = 0
-                #         c.SetField("restriction", self.restriction)
-                #     elif 980000 >= d_v > 575000:
-                #         self.restriction = 1
-                #         c.SetField("restriction", self.restriction)
-                #     elif 575000 >= d_v:
-                #         self.restriction = 2
-                #         c.SetField("restriction", self.restriction)
+                pv_total_costs_indoor = pv_total_costs_indoor_fun(y, v)
+                pv_non_potable_saving = pv_non_potable_saving_fun(r.GetFieldAsDouble("annual_water_savings"), p)
+
+                pv_indoor = pv_non_potable_saving - pv_total_costs_indoor
+                r.SetField("pv_total_costs_indoor", pv_total_costs_indoor)
+                r.SetField("pv_non_potable_saving", pv_non_potable_saving)
+                r.SetField("pv_indoor", pv_indoor)
+
+                # Calculate PV for outdoor use
+
+                pv_total_costs_outdoor = pv_total_costs_outdoor_fun(y, v)
+                pv_outdoor_potable_saving = pv_outdoor_potable_saving_fun(r.GetFieldAsDouble("outdoor_water_savings"), p)
+
+                pv_outdoor = pv_outdoor_potable_saving - pv_total_costs_outdoor
+                r.SetField("pv_total_costs_outdoor", pv_total_costs_outdoor)
+                r.SetField("pv_outdoor_potable_saving", pv_outdoor_potable_saving)
+                r.SetField("pv_outdoor", pv_outdoor)
 
 
-            # self.city_environment.finalise()
+
+
+            self.rwht_option.finalise()

@@ -9,7 +9,7 @@ from random import *
 
 class subsidies(Module):
         display_name = "Subsidies"
-        group_name = "ABM"
+        group_name = "Decisions"
         """
         Module Initialisation
         """

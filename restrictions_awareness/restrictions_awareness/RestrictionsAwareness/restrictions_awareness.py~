@@ -3,12 +3,12 @@ __author__ = 'acharett'
 
 from pydynamind import *
 from osgeo import ogr
-import math
 
 
-class education(Module):
-        display_name = "Education campaign"
-        group_name = "ABM"
+
+class RestrictionsAwareness(Module):
+        display_name = "policy_maker"
+        group_name = "Decisions"
         """
         Module Initialisation
         """
@@ -19,20 +19,18 @@ class education(Module):
             self.setIsGDALModule(True)
             #Parameter Definition
 
-            self.createParameter("education", DOUBLE)
-            self.education = 1
+            self.createParameter("restriction", INT)
 
 
-            self.city = ViewContainer("city", COMPONENT, READ)
-            self.city.addAttribute("dam_volume", Attribute.DOUBLE, READ)
-            self.city.addAttribute("education", Attribute.DOUBLE, WRITE)
-
+            self.policy_maker = ViewContainer("policy_maker", COMPONENT, READ)
+            self.policy_maker.addAttribute("dam_volume", Attribute.DOUBLE, READ)
+            self.policy_maker.addAttribute("restriction", Attribute.INT, WRITE)
 
 
             #Compile views
             views = []
             # views.append(self.city_council)
-            views.append(self.city)
+            views.append(self.policy_maker)
             # views.append(self.city_environment)
 
 
@@ -54,24 +52,24 @@ class education(Module):
             #Data Stream Manipulation
 
             #print self.my_parameter
-            self.city.reset_reading()
+            self.policy_maker.reset_reading()
             # self.city_environment.reset_reading()
-            for b in self.city:
+            for b in self.policy_maker:
                 volume = b.GetFieldAsDouble("dam_volume")
 
-
-                def bass(N,p,q,t):
-                    result = N*((1-math.exp(-(p+q)*t))/(1+(q/p)*math.exp(-(p+q)*t)))
-                    return result
-                # edu = 1+(200+-bass(200,0.000025,0.01,volume))/100
-                edu = 1+(100+-bass(100,0.000025,0.01,volume))/100
-
-                b.SetField("education", edu)
-
-
-
-            self.city.finalise()
-
+                if volume > 980:
+                    self.restriction = 0
+                    b.SetField("restriction", self.restriction)
+                    print 'Volume is '+str(volume) +' and the restriction is 0'
+                elif 980 >= volume > 575:
+                    self.restriction = 1
+                    b.SetField("restriction", self.restriction)
+                    print 'Volume is '+str(volume) +' and the restriction is 1'
+                elif 575 > volume:
+                    self.restriction = 2
+                    b.SetField("restriction", self.restriction)
+                    print 'Volume is '+str(volume) +' and the restriction is 2'
+            self.policy_maker.finalise()
 
 
 
@@ -118,3 +116,6 @@ class education(Module):
                 #     elif 575000 >= d_v:
                 #         self.restriction = 2
                 #         c.SetField("restriction", self.restriction)
+
+
+            # self.city_environment.finalise()

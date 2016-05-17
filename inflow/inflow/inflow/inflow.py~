@@ -4,12 +4,12 @@ __author__ = 'acharett'
 from pydynamind import *
 from osgeo import ogr
 from random import *
-import numpy as np
 
 
-class WaterPrice(Module):
-        display_name = "price"
-        group_name = "ABM"
+
+class inflow(Module):
+        display_name = "inflow"
+        group_name = "test"
         """
         Module Initialisation
         """
@@ -20,15 +20,14 @@ class WaterPrice(Module):
             self.setIsGDALModule(True)
             #Parameter Definition
 
-            self.createParameter("price", DOUBLE)
-            self.price = 1
+            self.createParameter("rule", INT)
+            self.rule = 1
 
 
             self.city = ViewContainer("city", COMPONENT, READ)
 
             self.city.addAttribute("year", Attribute.INT, READ)
-            self.city.addAttribute("price", Attribute.DOUBLE, WRITE)
-            # self.city.addAttribute("inflow", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("inflow", Attribute.DOUBLE, WRITE)
 
 
 
@@ -60,29 +59,19 @@ class WaterPrice(Module):
             self.city.reset_reading()
             # self.city.reset_reading()
 
-            points = np.array([(2005, 1.17), (2008,  1.62), (2009,  1.85), (2010, 2.1), (2011, 2.08), (2012, 2.08), (2013, 3.04), (2014, 2.99), (2015, 3.07)])
-            # get x and y vectors
-            x = points[:,0]
-            y = points[:,1]
-            # calculate polynomial
-            z = np.polyfit(x, y,3)
-            f = np.poly1d(z)
-
-
-
-            dict = {2005: 1.17, 2008:  1.62, 2009:  1.85, 2010: 2.1, 2011: 2.36, 2012: 2.11, 2013: 2.59, 2014: 2.55, 2015: 2.62}
+            dict = {1995:666.737, 1996:826.375, 1997:231.941, 1998:432.954, 1999:316.984, 2000:560.063, 2001:426.363, 2002:324.202, 2003:508.84, 2004:507.961, 2005:389.269, 2006:163.24, 2007:374.236, 2008:287.465, 2009:368.941, 2010:559.363, 2011:633.776, 2012:658.286, 2013:415.665, 2014:420.935, 2015:306.2582}
 
             for b in self.city:
-                year = b.GetFieldAsInteger("year")
-
-                if year in dict.keys():
-                    p = dict[year]
+                if self.rule == 1:
+                    year = b.GetFieldAsInteger("year")
                     # print 'year is: '+str(year)+ ' ; inflow is: ' + str(dict[year])
-                    b.SetField("price", p)
+                    b.SetField("inflow", dict[year])
 
-                else:
-                    p = f(year)
-                    b.SetField("price", p)
+                elif self.rule == 2:
+                    inf = randrange(150,700)
+                    b.SetField("inflow", inf)
+
+
 
             self.city.finalise()
             # self.city.finalise()

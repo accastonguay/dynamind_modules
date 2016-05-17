@@ -9,7 +9,7 @@ from random import *
 
 class HouseholdDemand(Module):
         display_name = "Household demand"
-        group_name = "ABM"
+        group_name = "Decisions"
         """
         Module Initialisation
         """

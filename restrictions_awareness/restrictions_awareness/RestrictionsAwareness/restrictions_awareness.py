@@ -8,7 +8,7 @@ from osgeo import ogr
 
 class RestrictionsAwareness(Module):
         display_name = "policy_maker"
-        group_name = "Decisions"
+        group_name = "ABM"
         """
         Module Initialisation
         """

@@ -6,7 +6,7 @@ import random
 
 class CouncilDecisionParcel(Module):
         display_name = "Council_parcel"
-        group_name = "ABM"
+        group_name = "Decisions"
         """
         Module Initialisation
         """

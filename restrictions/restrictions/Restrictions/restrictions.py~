@@ -3,12 +3,12 @@ __author__ = 'acharett'
 
 from pydynamind import *
 from osgeo import ogr
-import math
 
 
-class education(Module):
-        display_name = "Education campaign"
-        group_name = "ABM"
+
+class Restrictions(Module):
+        display_name = "Restrictions"
+        group_name = "Decisions"
         """
         Module Initialisation
         """
@@ -19,14 +19,16 @@ class education(Module):
             self.setIsGDALModule(True)
             #Parameter Definition
 
-            self.createParameter("education", DOUBLE)
-            self.education = 1
+            self.createParameter("restriction", INT)
+            self.restriction = 0
 
 
             self.city = ViewContainer("city", COMPONENT, READ)
             self.city.addAttribute("dam_volume", Attribute.DOUBLE, READ)
-            self.city.addAttribute("education", Attribute.DOUBLE, WRITE)
-
+            self.city.addAttribute("total_demand", Attribute.DOUBLE, READ)
+            self.city.addAttribute("total_outdoor_demand", Attribute.DOUBLE, READ)
+            self.city.addAttribute("restriction", Attribute.INT, WRITE)
+            self.city.addAttribute("total_demand_restricted", Attribute.DOUBLE, WRITE)
 
 
             #Compile views
@@ -58,20 +60,49 @@ class education(Module):
             # self.city_environment.reset_reading()
             for b in self.city:
                 volume = b.GetFieldAsDouble("dam_volume")
+                total_demand = b.GetFieldAsDouble("total_demand")
+                total_outdoor_demand = b.GetFieldAsDouble("total_outdoor_demand")
 
+                if volume > 980:
+                    self.restriction = 0
+                    b.SetField("restriction", self.restriction)
+                    self.demand_restricted = total_demand
+                    b.SetField("total_demand_restricted", self.demand_restricted)
+                    print 'Volume is '+str(volume) +' and the restriction is 0'
+                    print 'total demand is '+str(total_demand) +' and restricted use is'+str(self.demand_restricted)
 
-                def bass(N,p,q,t):
-                    result = N*((1-math.exp(-(p+q)*t))/(1+(q/p)*math.exp(-(p+q)*t)))
-                    return result
-                # edu = 1+(200+-bass(200,0.000025,0.01,volume))/100
-                edu = 1+(100+-bass(100,0.000025,0.01,volume))/100
+                elif 980 >= volume > 800:
+                    self.restriction = 1
+                    b.SetField("restriction", self.restriction)
+                    self.demand_restricted = total_demand - (total_outdoor_demand*0.3)
+                    b.SetField("total_demand_restricted", self.demand_restricted)
+                    print 'Volume is '+str(volume) +' and the restriction is 1'
+                    print 'total demand is '+str(total_demand) +' and restricted use is'+str(self.demand_restricted)
 
-                b.SetField("education", edu)
+                elif 800 >= volume > 600:
+                    self.restriction = 2
+                    b.SetField("restriction", self.restriction)
+                    self.demand_restricted = total_demand - (total_outdoor_demand*0.6)
+                    b.SetField("total_demand_restricted", self.demand_restricted)
+                    print 'Volume is '+str(volume) +' and the restriction is 2'
+                    print 'total demand is '+str(total_demand) +' and restricted use is'+str(self.demand_restricted)
 
+                elif 600 >= volume > 400:
+                    self.restriction = 3
+                    b.SetField("restriction", self.restriction)
+                    self.demand_restricted = total_demand - (total_outdoor_demand*0.8)
+                    b.SetField("total_demand_restricted", self.demand_restricted)
+                    print 'Volume is '+str(volume) +' and the restriction is 3'
+                    print 'total demand is '+str(total_demand) +' and restricted use is'+str(self.demand_restricted)
 
-
+                elif 400 >= volume:
+                    self.restriction = 4
+                    b.SetField("restriction", self.restriction)
+                    self.demand_restricted = total_demand - (total_outdoor_demand*1)
+                    b.SetField("total_demand_restricted", self.demand_restricted)
+                    print 'Volume is '+str(volume) +' and the restriction is 4'
+                    print 'total demand is '+str(total_demand) +' and restricted use is'+str(self.demand_restricted)
             self.city.finalise()
-
 
 
 

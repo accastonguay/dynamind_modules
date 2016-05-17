@@ -9,7 +9,7 @@ import random
 
 class CouncilDecisionRoad(Module):
         display_name = "Council_road"
-        group_name = "ABM"
+        group_name = "Decisions"
         """
         Module Initialisation
         """

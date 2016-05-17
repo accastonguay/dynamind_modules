@@ -8,7 +8,7 @@ import math
 
 class education(Module):
         display_name = "Education campaign"
-        group_name = "ABM"
+        group_name = "Decisions"
         """
         Module Initialisation
         """
