@@ -19,9 +19,6 @@ class CouncilDecisionParcel(Module):
             self.createParameter("rule", INT)
             self.rule = 1
 
-            self.createParameter("budget", INT)
-            self.budget = 200000
-
             self.parcel = ViewContainer("parcel", COMPONENT, READ)
             self.parcel.addAttribute("original_landuse", Attribute.STRING, READ)
             self.parcel.addAttribute("area", Attribute.INT, READ)
@@ -30,22 +27,17 @@ class CouncilDecisionParcel(Module):
             self.parcel.addAttribute("benefit", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("cost", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("avg_wtp_stream", Attribute.DOUBLE, READ)
+            self.parcel.addAttribute("decision_rule", Attribute.INT, READ)
+            self.parcel.addAttribute("random", Attribute.DOUBLE, READ)
+            self.parcel.addAttribute("year", Attribute.INT, READ)
+            self.parcel.addAttribute("budget", Attribute.DOUBLE, READ)
 
 
-
-
+            self.parcel.addAttribute("installation_year", Attribute.INT, WRITE)
             self.parcel.addAttribute("OPEX", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("temp_cost", Attribute.DOUBLE, WRITE)
 
-            # self.district = ViewContainer("district", COMPONENT, READ)
-            # # self.district.addAttribute("original_landuse", Attribute.STRING, READ)
-            # self.district.addAttribute("road_area", Attribute.INT, READ)
-            # # self.district.addAttribute("new_landuse", Attribute.STRING, WRITE)
-            # # self.district.addAttribute("benefit", Attribute.INT, WRITE)
-            # self.district.addAttribute("pcgreened", Attribute.INT, WRITE)
-            # self.district.addAttribute("flooded", Attribute.INT, READ)
-            # self.district.addAttribute("technology", Attribute.STRING, WRITE)
-            # self.district.addAttribute("cost", Attribute.INT, WRITE)
-            # self.district.addAttribute("area_greened", Attribute.DOUBLE, WRITE)
+
 
             self.total_cost = 0
             self.total_benefit = 0
@@ -68,151 +60,123 @@ class CouncilDecisionParcel(Module):
         def run(self):
             #Data Stream Manipulation
 
-            #print self.my_parameter
-
-            #Data Stream Manipulation
-
-            #print self.my_parameter
-            # if self.rule in [1,2,4]:
-
-
-            # convert = True
-            full_budget = 200000
-            year = 2000
+            # Nitrogen removal benefit function
             removal_rate = {'wetland': 0.61, 'sedimentation': 0.32, 'raingarden': 0.65}
             def benefit_fun(area,rem_rate):
                 b = 6645* rem_rate*117*0.002*area
                 return b
-            # budget_rand = random.randrange(500,200000)
+
+            self.total_cost = 0
+            self.total_benefit = 0
 
             self.parcel.reset_reading()
             for p in self.parcel:
+                full_budget = p.GetFieldAsDouble("budget")
+                full_budget -= self.total_cost
+                year = p.GetFieldAsInteger("year")
+                decision_rule = p.GetFieldAsInteger("decision_rule")
+                random_number = p.GetFieldAsDouble("random")
                 landuse = p.GetFieldAsString("original_landuse")
                 newlanduse = p.GetFieldAsString("new_landuse")
                 # flooded = p.GetFieldAsInteger("flooded")
                 area = p.GetFieldAsDouble("area")
                 avg_wtp_stream = p.GetFieldAsDouble("avg_wtp_stream")
 
-                ''' Generate random number to randomize the iteration through parcels '''
-                random_parcel = random.random()
-
                 landuses = ["PPRZ","PUZ1", "PUZ2", "PUZ4" ,"PUZ6","PUZ7"]
-                if landuse in landuses and landuse == newlanduse and random_parcel > 0.5:
+                # if landuse in landuses and landuse == newlanduse and random_parcel > 0.5:
+                if landuse in landuses and landuse == newlanduse:
 
                     ### Strategy 1: randomly chosen with random area and random budget ###
-                    if self.rule == 1:
-                        # Determine random budget from min 500 to max 200000
-
+                    if decision_rule == 1:
 
                         # Choose a random technology
 
                         con_area= area
-                        if int(area) > 1000:
+                        if int(area) > 2300:
                             self.tech = random.randrange(1,3)
                             self.technologies = {1:'wetland', 2:'sedimentation'}
+
+                            # If technology is wetland
                             if self.tech == 1:
                                 if 10000 > con_area > 500:
                                     self.cost= (100*con_area)
-                                    opex= 2
+                                    opex= 2*con_area
                                 elif con_area > 10000:
                                     self.cost= (75*con_area)
-                                    opex= 0.5
+                                    opex= 0.5*con_area
+
+                            # If technology is Sedimentation pond
                             elif self.tech == 2:
                                 self.cost= (150*con_area)
-                                opex= 5
+                                opex= 5*con_area
 
-                        elif 1000 >= int(area) > 300:
+                        elif 2300 >= int(area) > 80:
                             # Choose a random area to be converted, from min 25 m2 to max total area of parcel
                             con_area= area
 
-                            #calculate the annualised cost of technology
-                            # if self.tech== 1:
-                            #     if 500 > con_area >= 25:
-                            #         self.cost= (150*con_area)/(1*(1/(1+0.07)**20)/0.07)+10*con_area
-                            #     elif 10000 > con_area > 500:
-                            #         self.cost= (100*con_area)/(1*(1/(1+0.07)**20)/0.07)+2*con_area
-                            #     elif con_area > 10000:
-                            #         self.cost= (75*con_area)/(1*(1/(1+0.07)**20)/0.07)+0.5*con_area
-                            # elif self.tech == 2:
-                            #     if 250 > con_area >= 25:
-                            #         self.cost= (250*con_area)/(1*(1/(1+0.07)**20)/0.07)+20*con_area
-                            #     elif 1000 > con_area > 250:
-                            #         self.cost= (200*con_area)/(1*(1/(1+0.07)**20)/0.07)+10*con_area
-                            #     elif con_area > 1000:
-                            #         self.cost= (150*con_area)/(1*(1/(1+0.07)**20)/0.07)+5*con_area
-                            # elif self.tech == 3:
-                            #     if 100 > con_area >= 25:
-                            #         self.cost= (1000*con_area)/(1*(1/(1+0.07)**20)/0.07)+5*con_area
-                            #     elif 500 > con_area > 100:
-                            #         self.cost= (350*con_area)/(1*(1/(1+0.07)**20)/0.07)+5*con_area
-                            #     elif con_area > 500:
-                            #         self.cost= (250*con_area)/(1*(1/(1+0.07)**20)/0.07)+5*con_area
-                                                        # if self.tech== 1:
                             # Calculate capital cost
                             self.tech = random.randrange(1,4)
                             self.technologies = {1:'wetland', 2:'sedimentation', 3:'raingarden'}
+
+                            ### If technology is wetland
                             if self.tech == 1:
                                 if 500 > con_area >= 300:
                                     self.cost= 150*con_area
-                                    opex= 10
+                                    opex= 10*con_area
                                 elif 10000 > con_area > 500:
                                     self.cost= (100*con_area)
-                                    opex= 2
+                                    opex= 2*con_area
                                 elif con_area > 10000:
                                     self.cost= (75*con_area)
-                                    opex= 0.5
+                                    opex= 0.5*con_area
+
+                            ### If technology is Sedimentation Pond
                             elif self.tech == 2:
                                 if 250 > con_area >= 25:
                                     self.cost= (250*con_area)
-                                    opex= 20
+                                    opex= 20*con_area
 
                                 elif 1000 > con_area > 250:
                                     self.cost= (200*con_area)
-                                    opex= 10
+                                    opex= 10*con_area
                                 elif con_area > 1000:
                                     self.cost= (150*con_area)
-                                    opex= 5
+                                    opex= 5*con_area
+
+                            ### If technology is raingarden
                             elif self.tech == 3:
                                 if 100 > con_area >= 25:
                                     self.cost= (1000*con_area)
-                                    opex= 2
                                 elif 500 > con_area > 100:
                                     self.cost= (350*con_area)
                                 elif con_area > 500:
                                     self.cost= (250*con_area)
-                                opex= 5
-                        elif 300 >= int(area) > 25:
+                                opex= 5*con_area
+
+
+                        elif 80 >= int(area) > 56:
                             self.tech = random.randrange(1,3)
                             self.technologies = {1:'sedimentation', 2:'raingarden'}
 
+                             ### If technology is Sedimentation Pond
                             if self.tech == 1:
                                 if 250 > con_area >= 25:
                                     self.cost= (250*con_area)
-                                    opex= 20
+                                    opex= 20*con_area
 
-                                elif 1000 > con_area > 250:
-                                    self.cost= (200*con_area)
-                                    opex= 10
+                             ### If technology is raingarden
                             elif self.tech == 2:
-                                if 100 > con_area >= 25:
+                                if 100 > con_area >= 2:
                                     self.cost= (1000*con_area)
-                                    opex= 2
-                                elif 500 > con_area > 100:
-                                    self.cost= (350*con_area)
+                                    opex= 5*con_area
 
-                        else:
+                        elif 56 >= int(area) >= 2:
                             self.tech = random.randrange(1,2)
                             self.technologies = {1:'raingarden'}
                             self.cost= (1000*con_area)
-                            opex= 2
+                            opex= 5*con_area
 
-
-
-                        if self.cost> full_budget:
-                            print 'The cost is above budget'
-                            year+=1
-
-                        else:
+                        if self.cost <= full_budget:
 
                             # self.benefitdic = {'wetland':136*con_area, 'sedimentation':1341*con_area, 'raingarden': 10244*con_area}
                             test = self.technologies[self.tech]
@@ -225,14 +189,20 @@ class CouncilDecisionParcel(Module):
                             p.SetField("new_landuse", test)
                             p.SetField("benefit", b)
                             p.SetField("cost", self.cost)
+                            p.SetField("temp_cost", self.cost)
                             p.SetField("OPEX", opex)
+                            p.SetField("installation_year", year)
                             self.total_cost += self.cost
                             self.total_benefit += b
-                            print 'Year: ' + str(year)+ 'Converted area is: ' + str(con_area) +' and cost is: '+str(self.cost) + 'the benefit is: ' + str(b)+'the budget is: ' + str(full_budget)
+                            print 'Year: ' + str(year)+ ' ; Converted area is: ' + str(con_area) +' and cost is: '+str(self.cost) + 'the benefit is: ' + str(b)+'the budget is: ' + str(full_budget)
                             print str(self.technologies[self.tech])
+                            print random_number
                             full_budget -= self.cost
-                            year+=1
+                            # p.SetField("budget_remaining", full_budget)
 
+                        # else:
+                        #     print 'The cost is above budget', full_budget, random_number
+                            # p.SetField("budget_remaining", full_budget)
 
                     # ### Strategy 2: randomly choosen on flooded parcel ###
                     # elif self.rule == 2:
@@ -278,16 +248,18 @@ class CouncilDecisionParcel(Module):
                     #
                     #
                     # ### Strategy 3: Optimal spending with budget of 200000###
-                    elif self.rule == 2:
+                    elif decision_rule == 2:
 
 
-                        if area >1000:
+                        if area >10000:
                             # if 10000 > area > 500:
                             #     ann_cost_wetland = (100*area)/(1*(1/(1+0.07)**20)/0.07)+2*area
                             #     cost_wetland = (100*area)
                             # elif area > 10000:
                             ann_cost_wetland = (75*area)/(1*(1/(1+0.07)**20)/0.07)+0.5*area
                             cost_wetland = (75*area)
+
+
                         # elif 1000 > area > 250:
                         #         ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
                         #         cost_sedimentation = (200*area)
@@ -305,317 +277,523 @@ class CouncilDecisionParcel(Module):
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
                             options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation}
                             best_option = max(options)
-                            print 'The best option is: ' + str(best_option)
+                            # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
                             benefit = benefit_fun(area,removal)
 
 
-                        elif 1000 >= area >300:
-                            ### Calculate annualised cost and capital cost ###
-                            if 500 > area > 300:
-                                ann_cost_wetland = (150*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
-                                cost_wetland = (150*area)
-                            elif 10000 > area > 500:
-                                ann_cost_wetland = (100*area)/(1*(1/(1+0.07)**20)/0.07)+2*area
-                                cost_wetland = (100*area)
-                            # elif area > 10000:
-                            #     ann_cost_wetland = (75*area)/(1*(1/(1+0.07)**20)/0.07)+0.5*area
-                            #     cost_wetland = (75*area)
-                            if 250 > area > 50:
-                                ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
-                                cost_sedimentation = (250*area)
-                            elif 1000 > area > 250:
-                                ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
-                                cost_sedimentation = (200*area)
-                            elif area > 1000:
-                                ann_cost_sedimentation = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_sedimentation = (150*area)
-                            if 100 > area > 25:
-                                ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_raingarden = (1000*area)
-                            elif 500 > area > 100:
-                                ann_cost_raingarden = (350*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_raingarden = (350*area)
-                            elif 1000 > area > 500:
-                                ann_cost_raingarden = (250*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_raingarden = (250*area)
+                        elif 10000 >= area > 2300:
+                            ann_cost_wetland = (100*area)/(1*(1/(1+0.07)**20)/0.07)+2*area
+                            cost_wetland = (100*area)
 
-                            ''' Enter costs and benefits in dictionaries '''
-                            all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
-                            all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
-                            # self.benefitdic = {'wetland':136*area, 'sedimentation':1341*area, 'raingarden': 10244*area}
-
-                            # benefit_sedimentation=1341
-                            # benefit_wetland = 136
-                            # benefit_raingarden = 10244
-
-                            ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-
-                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation, 'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
-                            best_option = max(options)
-                            cost_best_option = all_cap_costs[best_option]
-                            removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
-
-                        elif 300 >= area >25:
-                            if 250 > area > 50:
-                                ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
-                                cost_sedimentation = (250*area)
-                            elif 1000 > area > 250:
-                                ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
-                                cost_sedimentation = (200*area)
-
-                            if 100 > area > 25:
-                                ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_raingarden = (1000*area)
-                            elif 500 > area > 100:
-                                ann_cost_raingarden = (350*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_raingarden = (350*area)
-
-                            all_ann_costs = {'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
-                            all_cap_costs = {'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
-                            # self.benefitdic = { 'sedimentation':1341*area, 'raingarden': 10244*area}
-                            #
-                            # benefit_sedimentation=1341
-                            # benefit_raingarden = 10244
-
-                            ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-
-
-                            # options = {'sedimentation':benefit_sedimentation*area/ann_cost_sedimentation,'raingarden': benefit_raingarden*area/ann_cost_raingarden}
-                            # best_option = max(options)
-                            # cost_best_option = all_cap_costs[best_option]
-                            # benefit = self.benefitdic[best_option]
-
-                            options = {'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation, 'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
-                            best_option = max(options)
-                            cost_best_option = all_cap_costs[best_option]
-                            removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
-                        else:
-
-                            ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                            cost_raingarden = (1000*area)
-
-
-                            all_ann_costs = {'raingarden':ann_cost_raingarden}
-                            all_cap_costs = {'raingarden':cost_raingarden}
-                            # self.benefitdic = { 'raingarden': 10244*area}
-                            #
-                            #
-                            # benefit_raingarden = 10244
-
-                            ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
-                            best_option = max(options)
-                            cost_best_option = all_cap_costs[best_option]
-                            # benefit = self.benefitdic[best_option]
-                            removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
-
-
-                        # if 100 > area > 10:
-                        #     cost_biofilter = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
-                        # elif 500 > area > 100:
-                        #     cost_biofilter = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
-                        # elif area > 500:
-                        #     cost_biofilter = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-
-
-
-
-                        '''If the cost is too high, there is no investment'''
-                        if cost_best_option > full_budget:
-                            print 'The cost is above budget'
-                            year+=1
-
-                        else:
-                            p.SetField("new_landuse", best_option)
-                            p.SetField("benefit", benefit)
-                            p.SetField("cost", cost_best_option)
-                            p.SetField("OPEX", all_ann_costs[best_option])
-                            self.total_cost += cost_best_option
-                            self.total_benefit += benefit
-
-                            print 'Year: ' + str(year)+ str(best_option) + ' installed for a cost of '  + str(cost_best_option)+' and total cost of ' + str(self.total_cost) + ' and a benefit of '+str(benefit)
-                            full_budget -= cost_best_option
-                            year+=1
-
-
-                    elif self.rule == 3:
-                        # rn = random.random()*0.0164
-                        # print rn
-                        # if rn < avg_wtp_stream:
-                            # print 'rn is smaller than average willigness to pay'
-
-
-
-                        if area >1000:
-                            if 10000 > area > 500:
-                                ann_cost_wetland = (100*area)/(1*(1/(1+0.07)**20)/0.07)+2*area
-                                cost_wetland = (100*area)
-                            elif area > 10000:
-                                ann_cost_wetland = (75*area)/(1*(1/(1+0.07)**20)/0.07)+0.5*area
-                                cost_wetland = (75*area)
-                            if 1000 > area > 250:
-                                ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
-                                cost_sedimentation = (200*area)
-                            elif area >= 1000:
-                                ann_cost_sedimentation = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_sedimentation = (150*area)
+                            ann_cost_sedimentation = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                            cost_sedimentation = (150*area)
 
                             all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation}
                             all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation}
-                            # self.benefitdic = {'wetland':136*area, 'sedimentation':1341*area}
-                            #
-                            # benefit_sedimentation=1341
-                            # benefit_wetland = 136
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            # options = {'wetland':benefit_wetland*area/ann_cost_wetland, 'sedimentation':benefit_sedimentation*area/ann_cost_sedimentation}
                             options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation}
-
                             best_option = max(options)
+                            # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
-                            # benefit = self.benefitdic[best_option]
                             removal = removal_rate[best_option]
                             benefit = benefit_fun(area,removal)
 
-                        elif 1000 >= area >300:
-                            ### Calculate annualised cost and capital cost ###
-                            if 500 > area > 300:
-                                ann_cost_wetland = (150*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
-                                cost_wetland = (150*area)
-                            elif 10000 > area > 500:
-                                ann_cost_wetland = (100*area)/(1*(1/(1+0.07)**20)/0.07)+2*area
-                                cost_wetland = (100*area)
-                            elif area > 10000:
-                                ann_cost_wetland = (75*area)/(1*(1/(1+0.07)**20)/0.07)+0.5*area
-                                cost_wetland = (75*area)
-                            if 250 > area > 50:
-                                ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
-                                cost_sedimentation = (250*area)
-                            elif 1000 > area > 250:
-                                ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
-                                cost_sedimentation = (200*area)
-                            elif area > 1000:
-                                ann_cost_sedimentation = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_sedimentation = (150*area)
-                            if 100 > area > 25:
-                                ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_raingarden = (1000*area)
-                            elif 500 > area > 100:
-                                ann_cost_raingarden = (350*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_raingarden = (350*area)
-                            elif 1000 > area > 500:
-                                ann_cost_raingarden = (250*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_raingarden = (250*area)
 
-                            ''' Enter costs and benefits in dictionaries '''
+                        elif 2300 >= area > 1000:
+                            ann_cost_wetland = (100*area)/(1*(1/(1+0.07)**20)/0.07)+2*area
+                            cost_wetland = (100*area)
+
+                            ann_cost_sedimentation = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                            cost_sedimentation = (150*area)
+
+                            ann_cost_raingarden = (250*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                            cost_raingarden = (250*area)
+
+
                             all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
                             all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
-                            # self.benefitdic = {'wetland':136*area, 'sedimentation':1341*area, 'raingarden': 10244*area}
-                            #
-                            # benefit_sedimentation=1341
-                            # benefit_wetland = 136
-                            # benefit_raingarden = 10244
-                            #
-                            # ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            # options = {'wetland':benefit_wetland*area/ann_cost_wetland, 'sedimentation':benefit_sedimentation*area/ann_cost_sedimentation,'raingarden': benefit_raingarden*area/ann_cost_raingarden}
-                            # best_option = max(options)
-                            # cost_best_option = all_cap_costs[best_option]
-                            # benefit = self.benefitdic[best_option]
-                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation, 'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
 
+                            ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland,
+                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
                             best_option = max(options)
+                            # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
-                            # benefit = self.benefitdic[best_option]
                             removal = removal_rate[best_option]
                             benefit = benefit_fun(area,removal)
 
-                        elif 300 >= area >25:
-                            if 250 > area > 50:
-                                ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
-                                cost_sedimentation = (250*area)
-                            elif 1000 > area > 250:
-                                ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
-                                cost_sedimentation = (200*area)
 
-                            if 100 > area > 25:
-                                ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_raingarden = (1000*area)
-                            elif 500 > area > 100:
-                                ann_cost_raingarden = (350*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
-                                cost_raingarden = (350*area)
+                        elif 1000 >= area > 500:
+                            ann_cost_wetland = (100*area)/(1*(1/(1+0.07)**20)/0.07)+2*area
+                            cost_wetland = (100*area)
 
-                            all_ann_costs = {'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
-                            all_cap_costs = {'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
-                            # self.benefitdic = { 'sedimentation':1341*area, 'raingarden': 10244*area}
-                            #
-                            # benefit_sedimentation=1341
-                            # benefit_raingarden = 10244
-                            #
-                            # ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            # options = {'sedimentation':benefit_sedimentation*area/ann_cost_sedimentation,'raingarden': benefit_raingarden*area/ann_cost_raingarden}
-                            # best_option = max(options)
-                            # cost_best_option = all_cap_costs[best_option]
-                            # benefit = self.benefitdic[best_option]
+                            ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                            cost_sedimentation = (200*area)
 
-                            options = {'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation, 'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            ann_cost_raingarden = (250*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                            cost_raingarden = (250*area)
 
+
+                            all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
+                            all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
+
+                            ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland,
+                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
                             best_option = max(options)
+                            # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
-                            # benefit = self.benefitdic[best_option]
                             removal = removal_rate[best_option]
                             benefit = benefit_fun(area,removal)
-                        else:
+
+                        elif 500 >= area > 250:
+                            ann_cost_wetland = (150*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                            cost_wetland = (150*area)
+
+                            ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                            cost_sedimentation = (200*area)
+
+                            ann_cost_raingarden = (350*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                            cost_raingarden = (350*area)
+
+                            all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
+                            all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
+
+                            ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland,
+                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            best_option = max(options)
+                            # print 'The best option is: ' + str(best_option)
+                            cost_best_option = all_cap_costs[best_option]
+                            removal = removal_rate[best_option]
+                            benefit = benefit_fun(area,removal)
+
+                        elif 250 >= area > 100:
+                            ann_cost_wetland = (150*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                            cost_wetland = (150*area)
+
+                            ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
+                            cost_sedimentation = (250*area)
+
+                            ann_cost_raingarden = (350*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                            cost_raingarden = (350*area)
+
+                            all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
+                            all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
+
+                            ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland,
+                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            best_option = max(options)
+                            # print 'The best option is: ' + str(best_option)
+                            cost_best_option = all_cap_costs[best_option]
+                            removal = removal_rate[best_option]
+                            benefit = benefit_fun(area,removal)
+
+                        elif 100 >= area > 80:
+                            ann_cost_wetland = (150*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                            cost_wetland = (150*area)
+
+                            ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
+                            cost_sedimentation = (250*area)
 
                             ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
                             cost_raingarden = (1000*area)
 
+                            all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
+                            all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
 
-                            all_ann_costs = {'raingarden':ann_cost_raingarden}
-                            all_cap_costs = {'raingarden':cost_raingarden}
-                            # self.benefitdic = { 'raingarden': 10244*area}
-                            #
-                            #
-                            # benefit_raingarden = 10244
-                            #
-                            # ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            # options = {'raingarden': benefit_raingarden*area/ann_cost_raingarden}
-                            # best_option = max(options)
-                            # cost_best_option = all_cap_costs[best_option]
-                            # benefit = self.benefitdic[best_option]
-                            options = {'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
-
+                            ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland,
+                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
                             best_option = max(options)
+                            # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
-                            # benefit = self.benefitdic[best_option]
                             removal = removal_rate[best_option]
                             benefit = benefit_fun(area,removal)
 
+                        elif 80 >= area > 56:
+
+                            ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
+                            cost_sedimentation = (250*area)
+
+                            ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                            cost_raingarden = (1000*area)
+
+                            all_ann_costs = {'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
+                            all_cap_costs = {'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
+
+                            ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                            options = {'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            best_option = max(options)
+                            # print 'The best option is: ' + str(best_option)
+                            cost_best_option = all_cap_costs[best_option]
+                            removal = removal_rate[best_option]
+                            benefit = benefit_fun(area,removal)
+
+                        elif 56 >= area > 2:
+
+                            ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                            cost_raingarden = (1000*area)
+
+                            all_ann_costs = {'raingarden':ann_cost_raingarden}
+                            all_cap_costs = {'raingarden':cost_raingarden}
+
+                            ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                            options = {'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            best_option = max(options)
+                            # print 'The best option is: ' + str(best_option)
+                            cost_best_option = all_cap_costs[best_option]
+                            removal = removal_rate[best_option]
+                            benefit = benefit_fun(area,removal)
+                        #
+                        #
+                        # elif 10000 >= area > 80:
+                        #     ann_cost_wetland = (75*area)/(1*(1/(1+0.07)**20)/0.07)+0.5*area
+                        #     cost_wetland = (75*area)
+                        #
+                        #     ann_cost_sedimentation = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                        #     cost_sedimentation = (150*area)
+                        #
+                        #     all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation}
+                        #     all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation}
+                        #
+                        #     ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                        #     options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation}
+                        #     best_option = max(options)
+                        #     print 'The best option is: ' + str(best_option)
+                        #     cost_best_option = all_cap_costs[best_option]
+                        #     removal = removal_rate[best_option]
+                        #     benefit = benefit_fun(area,removal)
+                        #
+                        # elif 2300 >= area >80:
+                        #     ### Calculate annualised cost and capital cost ###
+                        #     if 500 > area > 300:
+                        #         ann_cost_wetland = (150*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                        #         cost_wetland = (150*area)
+                        #     elif 10000 > area > 500:
+                        #         ann_cost_wetland = (100*area)/(1*(1/(1+0.07)**20)/0.07)+2*area
+                        #         cost_wetland = (100*area)
+                        #     # elif area > 10000:
+                        #     #     ann_cost_wetland = (75*area)/(1*(1/(1+0.07)**20)/0.07)+0.5*area
+                        #     #     cost_wetland = (75*area)
+                        #     if 250 > area > 50:
+                        #         ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
+                        #         cost_sedimentation = (250*area)
+                        #     elif 1000 > area > 250:
+                        #         ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                        #         cost_sedimentation = (200*area)
+                        #     elif area > 1000:
+                        #         ann_cost_sedimentation = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                        #         cost_sedimentation = (150*area)
+                        #     if 100 > area > 25:
+                        #         ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                        #         cost_raingarden = (1000*area)
+                        #     elif 500 > area > 100:
+                        #         ann_cost_raingarden = (350*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                        #         cost_raingarden = (350*area)
+                        #     elif 1000 > area > 500:
+                        #         ann_cost_raingarden = (250*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                        #         cost_raingarden = (250*area)
+                        #
+                        #     ''' Enter costs and benefits in dictionaries '''
+                        #     all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
+                        #     all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
+                        #     # self.benefitdic = {'wetland':136*area, 'sedimentation':1341*area, 'raingarden': 10244*area}
+                        #
+                        #     # benefit_sedimentation=1341
+                        #     # benefit_wetland = 136
+                        #     # benefit_raingarden = 10244
+                        #
+                        #     ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                        #
+                        #     options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation, 'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                        #     best_option = max(options)
+                        #     cost_best_option = all_cap_costs[best_option]
+                        #     removal = removal_rate[best_option]
+                        #     benefit = benefit_fun(area,removal)
+                        #
+                        # elif 80 >= area >56:
+                        #     if 250 > area > 50:
+                        #         ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
+                        #         cost_sedimentation = (250*area)
+                        #     elif 1000 > area > 250:
+                        #         ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                        #         cost_sedimentation = (200*area)
+                        #
+                        #     if 100 > area > 25:
+                        #         ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                        #         cost_raingarden = (1000*area)
+                        #     elif 500 > area > 100:
+                        #         ann_cost_raingarden = (350*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                        #         cost_raingarden = (350*area)
+                        #
+                        #     all_ann_costs = {'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
+                        #     all_cap_costs = {'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
+                        #     # self.benefitdic = { 'sedimentation':1341*area, 'raingarden': 10244*area}
+                        #     #
+                        #     # benefit_sedimentation=1341
+                        #     # benefit_raingarden = 10244
+                        #
+                        #     ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                        #
+                        #
+                        #     # options = {'sedimentation':benefit_sedimentation*area/ann_cost_sedimentation,'raingarden': benefit_raingarden*area/ann_cost_raingarden}
+                        #     # best_option = max(options)
+                        #     # cost_best_option = all_cap_costs[best_option]
+                        #     # benefit = self.benefitdic[best_option]
+                        #
+                        #     options = {'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation, 'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                        #     best_option = max(options)
+                        #     cost_best_option = all_cap_costs[best_option]
+                        #     removal = removal_rate[best_option]
+                        #     benefit = benefit_fun(area,removal)
+                        # else:
+                        #
+                        #     ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                        #     cost_raingarden = (1000*area)
+                        #
+                        #
+                        #     all_ann_costs = {'raingarden':ann_cost_raingarden}
+                        #     all_cap_costs = {'raingarden':cost_raingarden}
+                        #     # self.benefitdic = { 'raingarden': 10244*area}
+                        #     #
+                        #     #
+                        #     # benefit_raingarden = 10244
+                        #
+                        #     ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                        #     options = {'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                        #     best_option = max(options)
+                        #     cost_best_option = all_cap_costs[best_option]
+                        #     # benefit = self.benefitdic[best_option]
+                        #     removal = removal_rate[best_option]
+                        #     benefit = benefit_fun(area,removal)
+                        #
+                        #
+                        # # if 100 > area > 10:
+                        # #     cost_biofilter = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
+                        # # elif 500 > area > 100:
+                        # #     cost_biofilter = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                        # # elif area > 500:
+                        # #     cost_biofilter = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+
+
+
 
                         '''If the cost is too high, there is no investment'''
-                        if cost_best_option > full_budget:
-                            print 'The cost is above budget'
-                            year+=1
 
-                        else:
+
+
+                        if cost_best_option <= full_budget:
                             p.SetField("new_landuse", best_option)
                             p.SetField("benefit", benefit)
                             p.SetField("cost", cost_best_option)
+                            p.SetField("temp_cost", cost_best_option)
+                            p.SetField("installation_year", year)
+
                             p.SetField("OPEX", all_ann_costs[best_option])
                             self.total_cost += cost_best_option
                             self.total_benefit += benefit
+                            # print 'Year: ' + str(year)+ ' ; Converted area is: ' + str(area) +' and cost is: '+str(cost_best_option) + 'the benefit is: ' + str(b)+'the budget is: ' + str(full_budget)
 
-                            print 'Year: '+ str(year) + str(best_option) + ' installed for a cost of '  + str(cost_best_option)+' and total cost of ' + str(self.total_cost) + ' and a benefit of '+str(benefit)
+                            print 'Year: ' + str(year)+ str(best_option) + ' installed for a cost of '  + str(cost_best_option)+' and total cost of ' + str(self.total_cost) + ' and a benefit of '+str(benefit)
                             full_budget -= cost_best_option
-                            year+=1
+                            # p.SetField("budget_remaining", full_budget)
+
+
+                            # print str(self.technologies[self.tech])
+                            # print random_number
+                            # full_budget -= self.cost
+                       # else:
+                            # print 'The cost is above budget', full_budget, random_number
+                            # p.SetField("budget_remaining", full_budget)
+
+
+
+
+                    # elif decision_rule == 3:
+                    #     # rn = random.random()*0.0164
+                    #     # print rn
+                    #     # if rn < avg_wtp_stream:
+                    #         # print 'rn is smaller than average willigness to pay'
+                    #
+                    #
+                    #
+                    #     if area >1000:
+                    #         if 10000 > area > 500:
+                    #             ann_cost_wetland = (100*area)/(1*(1/(1+0.07)**20)/0.07)+2*area
+                    #             cost_wetland = (100*area)
+                    #         elif area > 10000:
+                    #             ann_cost_wetland = (75*area)/(1*(1/(1+0.07)**20)/0.07)+0.5*area
+                    #             cost_wetland = (75*area)
+                    #         if 1000 > area > 250:
+                    #             ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                    #             cost_sedimentation = (200*area)
+                    #         elif area >= 1000:
+                    #             ann_cost_sedimentation = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                    #             cost_sedimentation = (150*area)
+                    #
+                    #         all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation}
+                    #         all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation}
+                    #         # self.benefitdic = {'wetland':136*area, 'sedimentation':1341*area}
+                    #         #
+                    #         # benefit_sedimentation=1341
+                    #         # benefit_wetland = 136
+                    #
+                    #         ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                    #         # options = {'wetland':benefit_wetland*area/ann_cost_wetland, 'sedimentation':benefit_sedimentation*area/ann_cost_sedimentation}
+                    #         options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation}
+                    #
+                    #         best_option = max(options)
+                    #         cost_best_option = all_cap_costs[best_option]
+                    #         # benefit = self.benefitdic[best_option]
+                    #         removal = removal_rate[best_option]
+                    #         benefit = benefit_fun(area,removal)
+                    #
+                    #     elif 1000 >= area >300:
+                    #         ### Calculate annualised cost and capital cost ###
+                    #         if 500 > area > 300:
+                    #             ann_cost_wetland = (150*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                    #             cost_wetland = (150*area)
+                    #         elif 10000 > area > 500:
+                    #             ann_cost_wetland = (100*area)/(1*(1/(1+0.07)**20)/0.07)+2*area
+                    #             cost_wetland = (100*area)
+                    #         elif area > 10000:
+                    #             ann_cost_wetland = (75*area)/(1*(1/(1+0.07)**20)/0.07)+0.5*area
+                    #             cost_wetland = (75*area)
+                    #         if 250 > area > 50:
+                    #             ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
+                    #             cost_sedimentation = (250*area)
+                    #         elif 1000 > area > 250:
+                    #             ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                    #             cost_sedimentation = (200*area)
+                    #         elif area > 1000:
+                    #             ann_cost_sedimentation = (150*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                    #             cost_sedimentation = (150*area)
+                    #         if 100 > area > 25:
+                    #             ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                    #             cost_raingarden = (1000*area)
+                    #         elif 500 > area > 100:
+                    #             ann_cost_raingarden = (350*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                    #             cost_raingarden = (350*area)
+                    #         elif 1000 > area > 500:
+                    #             ann_cost_raingarden = (250*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                    #             cost_raingarden = (250*area)
+                    #
+                    #         ''' Enter costs and benefits in dictionaries '''
+                    #         all_ann_costs = {'wetland':ann_cost_wetland,'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
+                    #         all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
+                    #         # self.benefitdic = {'wetland':136*area, 'sedimentation':1341*area, 'raingarden': 10244*area}
+                    #         #
+                    #         # benefit_sedimentation=1341
+                    #         # benefit_wetland = 136
+                    #         # benefit_raingarden = 10244
+                    #         #
+                    #         # ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                    #         # options = {'wetland':benefit_wetland*area/ann_cost_wetland, 'sedimentation':benefit_sedimentation*area/ann_cost_sedimentation,'raingarden': benefit_raingarden*area/ann_cost_raingarden}
+                    #         # best_option = max(options)
+                    #         # cost_best_option = all_cap_costs[best_option]
+                    #         # benefit = self.benefitdic[best_option]
+                    #         options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation, 'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                    #
+                    #         best_option = max(options)
+                    #         cost_best_option = all_cap_costs[best_option]
+                    #         # benefit = self.benefitdic[best_option]
+                    #         removal = removal_rate[best_option]
+                    #         benefit = benefit_fun(area,removal)
+                    #
+                    #     elif 300 >= area >25:
+                    #         if 250 > area > 50:
+                    #             ann_cost_sedimentation = (250*area)/(1*(1/(1+0.07)**20)/0.07)+20*area
+                    #             cost_sedimentation = (250*area)
+                    #         elif 1000 > area > 250:
+                    #             ann_cost_sedimentation = (200*area)/(1*(1/(1+0.07)**20)/0.07)+10*area
+                    #             cost_sedimentation = (200*area)
+                    #
+                    #         if 100 > area > 25:
+                    #             ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                    #             cost_raingarden = (1000*area)
+                    #         elif 500 > area > 100:
+                    #             ann_cost_raingarden = (350*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                    #             cost_raingarden = (350*area)
+                    #
+                    #         all_ann_costs = {'sedimentation' : ann_cost_sedimentation, 'raingarden':ann_cost_raingarden}
+                    #         all_cap_costs = {'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
+                    #         # self.benefitdic = { 'sedimentation':1341*area, 'raingarden': 10244*area}
+                    #         #
+                    #         # benefit_sedimentation=1341
+                    #         # benefit_raingarden = 10244
+                    #         #
+                    #         # ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                    #         # options = {'sedimentation':benefit_sedimentation*area/ann_cost_sedimentation,'raingarden': benefit_raingarden*area/ann_cost_raingarden}
+                    #         # best_option = max(options)
+                    #         # cost_best_option = all_cap_costs[best_option]
+                    #         # benefit = self.benefitdic[best_option]
+                    #
+                    #         options = {'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation, 'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                    #
+                    #         best_option = max(options)
+                    #         cost_best_option = all_cap_costs[best_option]
+                    #         # benefit = self.benefitdic[best_option]
+                    #         removal = removal_rate[best_option]
+                    #         benefit = benefit_fun(area,removal)
+                    #     else:
+                    #
+                    #         ann_cost_raingarden = (1000*area)/(1*(1/(1+0.07)**20)/0.07)+5*area
+                    #         cost_raingarden = (1000*area)
+                    #
+                    #
+                    #         all_ann_costs = {'raingarden':ann_cost_raingarden}
+                    #         all_cap_costs = {'raingarden':cost_raingarden}
+                    #         # self.benefitdic = { 'raingarden': 10244*area}
+                    #         #
+                    #         #
+                    #         # benefit_raingarden = 10244
+                    #         #
+                    #         # ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
+                    #         # options = {'raingarden': benefit_raingarden*area/ann_cost_raingarden}
+                    #         # best_option = max(options)
+                    #         # cost_best_option = all_cap_costs[best_option]
+                    #         # benefit = self.benefitdic[best_option]
+                    #         options = {'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                    #
+                    #         best_option = max(options)
+                    #         cost_best_option = all_cap_costs[best_option]
+                    #         # benefit = self.benefitdic[best_option]
+                    #         removal = removal_rate[best_option]
+                    #         benefit = benefit_fun(area,removal)
+                    #
+                    #
+                    #     '''If the cost is too high, there is no investment'''
+                    #     if cost_best_option > full_budget:
+                    #         print 'The cost is above budget'
+                    #         year+=1
+                    #
+                    #     else:
+                    #         p.SetField("new_landuse", best_option)
+                    #         p.SetField("benefit", benefit)
+                    #         p.SetField("cost", cost_best_option)
+                    #         p.SetField("OPEX", all_ann_costs[best_option])
+                    #         self.total_cost += cost_best_option
+                    #         self.total_benefit += benefit
+                    #
+                    #         print 'Year: '+ str(year) + str(best_option) + ' installed for a cost of '  + str(cost_best_option)+' and total cost of ' + str(self.total_cost) + ' and a benefit of '+str(benefit)
+                    #         full_budget -= cost_best_option
+                    #         year+=1
 
 
 
             print 'total benefits: ' + str(self.total_benefit) + ' budget remaining: ' +str(full_budget)
+
             self.parcel.finalise()
 
             #     ### Need to finish roads ###

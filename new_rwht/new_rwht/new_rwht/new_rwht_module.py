@@ -19,7 +19,7 @@ class NewRwhtModule(Module):
             #Parameter Definition
 
             self.createParameter("quartile", INT)
-            self.quartile = 1
+            self.quartile = 2
 
 
             self.rwht_option = ViewContainer("rwht_option", COMPONENT, READ)
