@@ -1,8 +1,8 @@
 from pydynamind import *
 
 
-class PresentValue(Module):
-    display_name = "Present Value"
+class NewPresentValue(Module):
+    display_name = "New Present Value"
     group_name = "ABM"
     """
     Module Initialisation
@@ -68,9 +68,12 @@ class PresentValue(Module):
 
         self.__rwht.addAttribute("year", Attribute.INT, READ)
         self.__rwht.addAttribute("volume", Attribute.DOUBLE, READ)
-        self.__rwht.addAttribute("annual_water_savings", Attribute.DOUBLE, READ)
         self.__rwht.addAttribute("price", Attribute.DOUBLE, READ)
+        self.__rwht.addAttribute("wtp", Attribute.DOUBLE, READ)
+
         self.__rwht.addAttribute("outdoor_water_savings", Attribute.DOUBLE, READ)
+        self.__rwht.addAttribute("annual_water_savings", Attribute.DOUBLE, READ)
+
 
         self.__rwht.addAttribute("pv_total_costs_indoor", Attribute.DOUBLE, WRITE)
         self.__rwht.addAttribute("pv_total_costs_outdoor", Attribute.DOUBLE, WRITE)
@@ -115,25 +118,39 @@ class PresentValue(Module):
         except:
             raise LookupError("No such tank found")
 
-    def maintenance_costs(self):
+    def maintenance_costs_indoor(self, annual_savings):
         maintenance_cost = []
+        savings = []
         for y in self.__years:
             maintenance_cost.append(20.)
+            savings.append(annual_savings)
 
-        discount_maintenance_cost = [d * m for d, m in zip(self.__discount_factor, maintenance_cost)]
+
+        discount_maintenance_cost = [(d * m)+(s * 0.05 * d) for d, m, s in zip(self.__discount_factor, maintenance_cost, savings)]
 
         return sum(discount_maintenance_cost)
 
-    def pv_total_costs_indoor_fun(self, year, volume):
+    def maintenance_costs_outdoor(self, outdoor_savings):
+        maintenance_cost = []
+        savings = []
+        for y in self.__years:
+            maintenance_cost.append(20.)
+            savings.append(outdoor_savings)
 
+        discount_maintenance_cost = [(d * m)+(s * 0.05 * d) for d, m, s in zip(self.__discount_factor, maintenance_cost, savings)]
+
+        return sum(discount_maintenance_cost)
+
+    def pv_total_costs_indoor_fun(self, year, volume, annual_savings):
+        pump_future_value = 355 * 1. / (1. + 0.05) ** (10)
         try:
-            return self.construction_costs_indoor(year, volume) + self.maintenance_costs()
+            return self.construction_costs_indoor(year, volume) + self.maintenance_costs_indoor(annual_savings)+pump_future_value
         except (LookupError):
             raise ValueError("can't calculate total costs")
 
-    def pv_total_costs_outdoor_fun(self, year, volume):
+    def pv_total_costs_outdoor_fun(self, year, volume, outdoor_savings):
         try:
-            return self.construction_costs_outdoor(year, volume) + self.maintenance_costs()
+            return self.construction_costs_outdoor(year, volume) + self.maintenance_costs_outdoor(outdoor_savings)
         except (LookupError):
             raise ValueError("can't calculate total costs")
 
@@ -148,14 +165,15 @@ class PresentValue(Module):
 
         return sum(discount_non_potable_savings)
 
-    def pv_outdoor_saving_fun(self, outdoor_water_savings, price):
+    def pv_outdoor_saving_fun(self, outdoor_water_savings, price, wtp):
         indoor_water_price = []
-
+        wtp_list = []
         for y in self.__years:
             indoor_water_price.append(price)
+            wtp_list.append(wtp)
 
-        discount_outdoor_savings = [d * m * outdoor_water_savings for d, m in
-                                    zip(self.__discount_factor, indoor_water_price)]
+        discount_outdoor_savings = [(d * m * outdoor_water_savings) + (w*d) for d, m, w in
+                                    zip(self.__discount_factor, indoor_water_price, wtp_list)]
 
         return sum(discount_outdoor_savings)
 
@@ -169,7 +187,7 @@ class PresentValue(Module):
 
 
             # Calculate PV for indoor use
-            pv_total_costs_indoor = self.pv_total_costs_indoor_fun(r.GetFieldAsInteger("year"), r.GetFieldAsDouble("volume"))
+            pv_total_costs_indoor = self.pv_total_costs_indoor_fun(r.GetFieldAsInteger("year"), r.GetFieldAsDouble("volume"),r.GetFieldAsDouble("annual_water_savings"))
             pv_non_potable_saving = self.pv_non_potable_saving_fun(
                 r.GetFieldAsDouble("annual_water_savings"), r.GetFieldAsDouble("price"))
             pv_indoor = pv_non_potable_saving - pv_total_costs_indoor
@@ -178,8 +196,8 @@ class PresentValue(Module):
             r.SetField("pv_indoor", pv_indoor)
 
             # Calculate PV for outdoor use
-            pv_total_costs_outdoor = self.pv_total_costs_outdoor_fun(r.GetFieldAsInteger("year"), r.GetFieldAsDouble("volume"))
-            pv_outdoor_saving = self.pv_outdoor_saving_fun(r.GetFieldAsDouble("outdoor_water_savings"), r.GetFieldAsDouble("price"))
+            pv_total_costs_outdoor = self.pv_total_costs_outdoor_fun(r.GetFieldAsInteger("year"), r.GetFieldAsDouble("volume"),r.GetFieldAsDouble("outdoor_water_savings"))
+            pv_outdoor_saving = self.pv_outdoor_saving_fun(r.GetFieldAsDouble("outdoor_water_savings"), r.GetFieldAsDouble("price"),r.GetFieldAsDouble("wtp"))
             pv_outdoor = pv_outdoor_saving - pv_total_costs_outdoor
             r.SetField("pv_total_costs_outdoor", pv_total_costs_outdoor)
             r.SetField("pv_outdoor_saving", pv_outdoor_saving)
