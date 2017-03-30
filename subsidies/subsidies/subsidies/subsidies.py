@@ -74,7 +74,7 @@ class subsidies(Module):
                 if key < 2003:
                     incentive_2[key] = 0
                 elif 2003 <= key < 2007:
-                    incentive_2[key] = 150
+                    incentive_2[key] = 300
                 elif 2007 <= key < 2012:
                     incentive_2[key] = 500
                 elif key >= 2012:
@@ -84,7 +84,7 @@ class subsidies(Module):
                 if key < 2003:
                     incentive_5[key] = 0
                 elif 2003 <= key < 2007:
-                    incentive_5[key] = 150
+                    incentive_5[key] = 300
                 elif 2007 <= key < 2012:
                     incentive_5[key] = 900
                 elif key >= 2012:

@@ -45,12 +45,15 @@ class WaterPriceParcel(Module):
             self.__dict8 = {2004: 0.82785, 2005: 0.900025, 2006: 0.940075, 2007: 0.97965, 2008: 1.09745, 2009: 1.33295, 2010: 1.6351, 2011: 1.9416, 2012: 2.0832, 2013: 2.56505, 2014: 3.02065, 2015: 3.0322}
             self.__dict9 = {2004: 1.03785, 2005: 1.329625, 2006: 1.388875, 2007: 1.4474, 2008: 1.62145, 2009: 1.96935, 2010: 2.41575, 2011: 2.8686, 2012: 3.0778, 2013: 3.78975, 2014: 4.46295, 2015: 4.4821}
 
+            self.__sewer_price = {2005: 0.9921, 2006: 1.0363, 2007: 1.07995, 2008: 1.2098, 2009: 1.41535, 2010: 1.6161, 2011: 1.8371, 2012: 1.9546, 2013: 2.0227, 2014: 2.0908}
+
         def init(self):
             self.parcel = ViewContainer("parcel", COMPONENT, READ)
 
             self.parcel.addAttribute("year", Attribute.INT, READ)
             self.parcel.addAttribute("total_daily_demand", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("price", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("sewer_price", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("time", Attribute.INT, WRITE)
             self.parcel.addAttribute("level", Attribute.INT, WRITE)
 
@@ -100,7 +103,7 @@ class WaterPriceParcel(Module):
                             p = self.__dict3[year]
                             b.SetField("price", p)
                             b.SetField("level", 3)
-                    b.SetField("time", 1)
+                    b.SetField("time", self.time)
 
                 elif self.time == 2:
                     if year < 2004:
@@ -123,7 +126,7 @@ class WaterPriceParcel(Module):
                             p = self.__dict6[year]
                             b.SetField("price", p)
                             b.SetField("level", 3)
-                    b.SetField("time", 2)
+                    b.SetField("time", self.time)
 
                 elif self.time == 3:
                     if year < 2004:
@@ -146,5 +149,7 @@ class WaterPriceParcel(Module):
                             p = self.__dict9[year]
                             b.SetField("price", p)
                             b.SetField("level", 3)
-                    b.SetField("time", 2)
+
+                    b.SetField("time", self.time)
+                b.SetField("sewer_price", self.__sewer_price[year])
             self.parcel.finalise()

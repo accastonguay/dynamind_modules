@@ -31,8 +31,6 @@ class MyModule(Module):
 
             self.registerViewContainers([self.building])
 
-
-
             #Data Stream Definition
 
 
