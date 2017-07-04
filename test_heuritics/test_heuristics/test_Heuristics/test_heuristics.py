@@ -31,7 +31,6 @@ class test_Heuristics(Module):
             self.parcel.addAttribute("cost", Attribute.DOUBLE, WRITE)
             # self.parcel.addAttribute("avg_wtp_stream", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("decision_rule", Attribute.INT, READ)
-            # self.parcel.addAttribute("decision_rule", Attribute.INT, WRITE)
 
             self.parcel.addAttribute("random", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("year", Attribute.INT, READ)
@@ -42,14 +41,9 @@ class test_Heuristics(Module):
             self.parcel.addAttribute("prob_raingarden", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("prob_wetland", Attribute.DOUBLE, READ)
 
-
-
-
             self.parcel.addAttribute("installation_year", Attribute.INT, WRITE)
             self.parcel.addAttribute("OPEX", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("temp_cost", Attribute.DOUBLE, WRITE)
-
-
 
             self.total_cost = 0
             self.total_benefit = 0
@@ -57,7 +51,6 @@ class test_Heuristics(Module):
             #Compile views
             views = []
             views.append(self.parcel)
-            # views.append(self.district)
 
             #Register ViewContainer to stream
             self.registerViewContainers(views)
@@ -72,10 +65,79 @@ class test_Heuristics(Module):
         def run(self):
             #Data Stream Manipulation
 
+            suitable_zoneLu = {"wetland": ["GRZ1_Unclassified Private Land", "GRZ2_Unclassified Private Land",
+                                         "PCRZ_Nature Reserve","PCRZ_Unclassified Private Land",
+                                         "PPRZ_Community Service Facilities or Other",
+                                         "PPRZ_Unclassified Private Land",
+                                         "SUZ2_Outdoor Sports - Extended Areas / Cross Country",
+                                         "UFZ_Nature Reserve",
+                                         "UFZ_Unclassified Private Land"],
+                               "raingarden": ["B1Z_Road Void", "B2Z_Road Void", "B3Z_Road Void", "C1Z_Road Void",
+                                            "C1Z_Unclassified Private Land",
+                                            "C1Z_Unspecified - Transport, Storage, Utilities and Communication",
+                                            "C2Z_Plant / Tree Nursery",
+                                            "CDZ1_Road Void", "CDZ1_Unclassified Private Land",
+                                            "GRZ1_Residential Development Site",
+                                            "GRZ1_Road Void", "GRZ1_Unclassified Private Land",
+                                            "GRZ1_Vacant Englobo Residential Subdivisional Land",
+                                            "GRZ1_Vacant Residential Home Site / Surveyed Lot", "GRZ2_Road Void",
+                                            "GRZ2_Unclassified Private Land", "GRZ3_Road Void",
+                                            "GRZ3_Unclassified Private Land",
+                                            "GWAZ1_Detached Home", "GWAZ1_Road Void", "LDRZ_Road Void",
+                                            "LDRZ_Unclassified Private Land",
+                                            "MUZ_Road Void", "MUZ_Unclassified Private Land", "NRZ3_Road Void",
+                                            "NRZ3_Unclassified Private Land",
+                                            "PPRZ_Community Service Facilities or Other", "PPRZ_Member Club Facility",
+                                            "PPRZ_Protected Seascape - Public", "PPRZ_Reserved Land",
+                                            "PPRZ_Unclassified Private Land", "PUZ1_Unclassified Private Land",
+                                            "PUZ4_Road Void",
+                                            "PUZ6_Community Service Facilities or Other", "PUZ6_Road Void",
+                                            "PUZ6_Unclassified Private Land",
+                                            "R1Z_Community Service Facilities or Other", "R1Z_Road Void",
+                                            "RDZ1_Road Void", "RDZ2_Road Void", "RGZ1_Road Void",
+                                            "SUZ1_Road Void", "SUZ2_Unclassified Private Land", "UFZ_Road Void",
+                                            "UFZ_Unclassified Private Land"],
+                               "pond": ["GRZ1_Vacant Residential Home Site / Surveyed Lot",
+                                      "GRZ2_Unclassified Private Land", "GRZ2_Vacant Land mining unspecified",
+                                      "IN1Z_Unclassified Private Land", "NA_Reserved Land", "PCRZ_Nature Reserve",
+                                      "PCRZ_Reserved Land",
+                                      "PPRZ_Community Service Facilities or Other", "PPRZ_Unclassified Private Land"]}
             # Nitrogen removal benefit function
+            rainfall={2000: 882.5,
+                      2001: 758,
+                      2002: 668.7,
+                      2003: 822.6,
+                      2004: 820,
+                      2005: 800.9,
+                      2006: 643.2,
+                      2007: 728,
+                      2008: 608.2,
+                      2009: 718.4,
+                      2010: 1051.9,
+                      2011: 1163.4,
+                      2012: 907.2,
+                      2013: 878.2,
+                      2014: 695.5,
+                      2015: 628,
+                      2016: 896.6}
+
+            offset={  2004: 800,
+                      2005: 800,
+                      2006: 6645,
+                      2007: 6645,
+                      2008: 6645,
+                      2009: 6645,
+                      2010: 6645,
+                      2011: 6645,
+                      2012: 6645,
+                      2013: 6645,
+                      2014: 6645,
+                      2015: 6645,
+                      2016: 6645}
+
             removal_rate = {'wetland': 0.61, 'sedimentation': 0.32, 'raingarden': 0.65}
-            def benefit_fun(area,rem_rate):
-                b = 6645* rem_rate*117*0.002*area
+            def benefit_fun(area,rem_rate, runoff):
+                b = 6645* rem_rate*runoff*0.002*area
                 return b
 
 
@@ -97,38 +159,33 @@ class test_Heuristics(Module):
 
             self.parcel.reset_reading()
             for p in self.parcel:
+
+                # Load full annual budget
                 full_budget = p.GetFieldAsDouble("budget")
                 council = p.GetFieldAsString("council")
-                # print council
-                # full_budget = {council: p.GetFieldAsDouble("budget")}
-                # print full_budget
 
-                # full_budget -= self.total_cost
-                # full_budget = full_budget[council] - self.total_cost[council]
+                # Substract current costs from full budget
                 full_budget -= self.total_cost[council]
-
-                # print full_budget
 
                 year = p.GetFieldAsInteger("year")
                 decision_rule = p.GetFieldAsInteger("decision_rule")
-                print decision_rule
-                # p.SetField("installation_year", year)
+                runoff = rainfall[year] * 0.9 * 0.20
 
-                # random_number = p.GetFieldAsDouble("random")
                 landuse = p.GetFieldAsString("original_landuse")
                 newlanduse = p.GetFieldAsString("new_landuse")
-                # flooded = p.GetFieldAsInteger("flooded")
                 area = p.GetFieldAsDouble("area")
                 loss_aversion = p.GetFieldAsDouble("loss_aversion")
                 prob_rg = p.GetFieldAsDouble("prob_raingarden")
                 prob_wl = p.GetFieldAsDouble("prob_wetland")
                 prob_sd = p.GetFieldAsDouble("prob_sedimentation")
 
-                # avg_wtp_stream = p.GetFieldAsDouble("avg_wtp_stream")
-                # print random_number
 
+
+
+                # Set of suitable landuses
                 landuses = ["PPRZ","PCRZ","PDZ2","PUZ1", "PUZ2", "PUZ4" ,"PUZ6","PUZ7"]
-                # if landuse in landuses and landuse == newlanduse and random_parcel > 0.5:
+
+                # if landuse is suitable and if the parcel has not yet been coverted
                 if landuse in landuses and landuse == newlanduse:
 
                     ## Strategy 1: randomly chosen with random area and random budget ###
@@ -233,7 +290,7 @@ class test_Heuristics(Module):
 
                             # b = self.benefitdic[self.technologies[self.tech]]
                             removal = removal_rate[self.technologies[self.tech]]
-                            b = benefit_fun(area,removal)
+                            b = benefit_fun(area,removal, runoff)
 
 
                             p.SetField("new_landuse", test)
@@ -273,12 +330,12 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation}
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'],runoff)/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'],runoff)/ann_cost_sedimentation}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
+                            benefit = benefit_fun(area,removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 0.5, 'sedimentation': 5}
@@ -296,12 +353,12 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation}
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'],runoff)/ann_cost_wetland, 'sedimentation':benefit_fun(area,removal_rate['sedimentation'],runoff)/ann_cost_sedimentation}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
+                            benefit = benefit_fun(area,removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 2, 'sedimentation': 5}
@@ -323,14 +380,14 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland,
-                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
-                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'],runoff)/ann_cost_wetland,
+                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'],runoff)/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'],runoff)/ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
+                            benefit = benefit_fun(area,removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 2, 'sedimentation': 5, 'raingarden': 5}
@@ -352,14 +409,14 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland,
-                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
-                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'],runoff)/ann_cost_wetland,
+                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'],runoff)/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'],runoff)/ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
+                            benefit = benefit_fun(area,removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 2, 'sedimentation': 10, 'raingarden': 5}
@@ -379,14 +436,14 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland,
-                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
-                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'],runoff)/ann_cost_wetland,
+                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'],runoff)/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'],runoff)/ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
+                            benefit = benefit_fun(area,removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 10, 'sedimentation': 10, 'raingarden': 5}
@@ -406,14 +463,14 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland,
-                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
-                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'],runoff)/ann_cost_wetland,
+                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'],runoff)/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'],runoff)/ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
+                            benefit = benefit_fun(area,removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 10, 'sedimentation': 20, 'raingarden': 5}
@@ -433,14 +490,14 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland':cost_wetland,'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland':benefit_fun(area,removal_rate['wetland'])/ann_cost_wetland,
-                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
-                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            options = {'wetland':benefit_fun(area,removal_rate['wetland'],runoff)/ann_cost_wetland,
+                                       'sedimentation':benefit_fun(area,removal_rate['sedimentation'],runoff)/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'],runoff)/ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
+                            benefit = benefit_fun(area,removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 10, 'sedimentation': 20, 'raingarden': 5}
@@ -458,13 +515,13 @@ class test_Heuristics(Module):
                             all_cap_costs = {'sedimentation' : cost_sedimentation, 'raingarden':cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'sedimentation':benefit_fun(area,removal_rate['sedimentation'])/ann_cost_sedimentation,
-                                       'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            options = {'sedimentation':benefit_fun(area,removal_rate['sedimentation'],runoff)/ann_cost_sedimentation,
+                                       'raingarden':benefit_fun(area,removal_rate['raingarden'],runoff)/ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
+                            benefit = benefit_fun(area,removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'sedimentation': 20, 'raingarden': 5}
@@ -479,12 +536,12 @@ class test_Heuristics(Module):
                             all_cap_costs = {'raingarden':cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'raingarden':benefit_fun(area,removal_rate['raingarden'])/ann_cost_raingarden}
+                            options = {'raingarden':benefit_fun(area,removal_rate['raingarden'],runoff)/ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area,removal)
+                            benefit = benefit_fun(area,removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'raingarden': 5}
@@ -525,14 +582,14 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland': cost_wetland, 'sedimentation': cost_sedimentation}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland']) / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff) / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
-                                                                    removal_rate['sedimentation']) / ann_cost_sedimentation}
+                                                                    removal_rate['sedimentation'],runoff) / ann_cost_sedimentation}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 0.5, 'sedimentation': 5}
@@ -550,14 +607,14 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland': cost_wetland, 'sedimentation': cost_sedimentation}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland']) / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff) / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
-                                                                    removal_rate['sedimentation']) / ann_cost_sedimentation}
+                                                                    removal_rate['sedimentation'],runoff) / ann_cost_sedimentation}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 2, 'sedimentation': 5}
@@ -580,15 +637,15 @@ class test_Heuristics(Module):
                                              'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland']) / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff) / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
-                                                                    removal_rate['sedimentation']) / ann_cost_sedimentation,
-                                       'raingarden': benefit_fun(area, removal_rate['raingarden']) / ann_cost_raingarden}
+                                                                    removal_rate['sedimentation'],runoff) / ann_cost_sedimentation,
+                                       'raingarden': benefit_fun(area, removal_rate['raingarden'],runoff) / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 2, 'sedimentation': 5, 'raingarden': 5}
@@ -611,15 +668,15 @@ class test_Heuristics(Module):
                                              'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland']) / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff) / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
-                                                                    removal_rate['sedimentation']) / ann_cost_sedimentation,
-                                       'raingarden': benefit_fun(area, removal_rate['raingarden']) / ann_cost_raingarden}
+                                                                    removal_rate['sedimentation'],runoff) / ann_cost_sedimentation,
+                                       'raingarden': benefit_fun(area, removal_rate['raingarden'],runoff) / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 2, 'sedimentation': 10, 'raingarden': 5}
@@ -641,15 +698,15 @@ class test_Heuristics(Module):
                                              'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland']) / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff) / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
-                                                                    removal_rate['sedimentation']) / ann_cost_sedimentation,
-                                       'raingarden': benefit_fun(area, removal_rate['raingarden']) / ann_cost_raingarden}
+                                                                    removal_rate['sedimentation'],runoff) / ann_cost_sedimentation,
+                                       'raingarden': benefit_fun(area, removal_rate['raingarden'],runoff) / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 10, 'sedimentation': 10, 'raingarden': 5}
@@ -671,15 +728,15 @@ class test_Heuristics(Module):
                                              'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland']) / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff) / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
-                                                                    removal_rate['sedimentation']) / ann_cost_sedimentation,
-                                       'raingarden': benefit_fun(area, removal_rate['raingarden']) / ann_cost_raingarden}
+                                                                    removal_rate['sedimentation'],runoff) / ann_cost_sedimentation,
+                                       'raingarden': benefit_fun(area, removal_rate['raingarden'],runoff) / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 10, 'sedimentation': 20, 'raingarden': 5}
@@ -701,15 +758,15 @@ class test_Heuristics(Module):
                                              'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland']) / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff) / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
-                                                                    removal_rate['sedimentation']) / ann_cost_sedimentation,
-                                       'raingarden': benefit_fun(area, removal_rate['raingarden']) / ann_cost_raingarden}
+                                                                    removal_rate['sedimentation'],runoff) / ann_cost_sedimentation,
+                                       'raingarden': benefit_fun(area, removal_rate['raingarden'],runoff) / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 10, 'sedimentation': 20, 'raingarden': 5}
@@ -728,13 +785,13 @@ class test_Heuristics(Module):
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
                             options = {
-                                'sedimentation': benefit_fun(area, removal_rate['sedimentation']) / ann_cost_sedimentation,
-                                'raingarden': benefit_fun(area, removal_rate['raingarden']) / ann_cost_raingarden}
+                                'sedimentation': benefit_fun(area, removal_rate['sedimentation'],runoff) / ann_cost_sedimentation,
+                                'raingarden': benefit_fun(area, removal_rate['raingarden'],runoff) / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'sedimentation': 20, 'raingarden': 5}
@@ -749,12 +806,12 @@ class test_Heuristics(Module):
                             all_cap_costs = {'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'raingarden': benefit_fun(area, removal_rate['raingarden']) / ann_cost_raingarden}
+                            options = {'raingarden': benefit_fun(area, removal_rate['raingarden'],runoff) / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'raingarden': 5}
@@ -797,15 +854,15 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland': cost_wetland, 'sedimentation': cost_sedimentation}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland'])*prob_wl / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff)*prob_wl / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
                                                                     removal_rate[
-                                                                        'sedimentation'])*prob_sd / ann_cost_sedimentation}
+                                                                        'sedimentation'],runoff)*prob_sd / ann_cost_sedimentation}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 0.5, 'sedimentation': 5}
@@ -823,15 +880,15 @@ class test_Heuristics(Module):
                             all_cap_costs = {'wetland': cost_wetland, 'sedimentation': cost_sedimentation}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland'])*prob_wl / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff)*prob_wl / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
                                                                     removal_rate[
-                                                                        'sedimentation'])*prob_sd / ann_cost_sedimentation}
+                                                                        'sedimentation'],runoff)*prob_sd / ann_cost_sedimentation}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 2, 'sedimentation': 5}
@@ -854,17 +911,17 @@ class test_Heuristics(Module):
                                              'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland'])*prob_wl / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff)*prob_wl / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
                                                                     removal_rate[
-                                                                        'sedimentation'])*prob_sd / ann_cost_sedimentation,
+                                                                        'sedimentation'],runoff)*prob_sd / ann_cost_sedimentation,
                                        'raingarden': benefit_fun(area,
-                                                                 removal_rate['raingarden'])*prob_rg / ann_cost_raingarden}
+                                                                 removal_rate['raingarden'],runoff)*prob_rg / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 2, 'sedimentation': 5, 'raingarden': 5}
@@ -887,17 +944,17 @@ class test_Heuristics(Module):
                                              'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland'])*prob_wl / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff)*prob_wl / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
                                                                     removal_rate[
-                                                                        'sedimentation'])*prob_sd / ann_cost_sedimentation,
+                                                                        'sedimentation'],runoff)*prob_sd / ann_cost_sedimentation,
                                        'raingarden': benefit_fun(area,
-                                                                 removal_rate['raingarden'])*prob_rg / ann_cost_raingarden}
+                                                                 removal_rate['raingarden'],runoff)*prob_rg / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 2, 'sedimentation': 10, 'raingarden': 5}
@@ -919,17 +976,17 @@ class test_Heuristics(Module):
                                              'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland'])*prob_wl / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff)*prob_wl / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
                                                                     removal_rate[
-                                                                        'sedimentation'])*prob_sd / ann_cost_sedimentation,
+                                                                        'sedimentation'],runoff)*prob_sd / ann_cost_sedimentation,
                                        'raingarden': benefit_fun(area,
-                                                                 removal_rate['raingarden'])*prob_rg / ann_cost_raingarden}
+                                                                 removal_rate['raingarden'],runoff)*prob_rg / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 10, 'sedimentation': 10, 'raingarden': 5}
@@ -951,17 +1008,17 @@ class test_Heuristics(Module):
                                              'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland'])*prob_wl / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff)*prob_wl / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
                                                                     removal_rate[
-                                                                        'sedimentation'])*prob_sd / ann_cost_sedimentation,
+                                                                        'sedimentation'],runoff)*prob_sd / ann_cost_sedimentation,
                                        'raingarden': benefit_fun(area,
-                                                                 removal_rate['raingarden'])*prob_rg / ann_cost_raingarden}
+                                                                 removal_rate['raingarden'],runoff)*prob_rg / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 10, 'sedimentation': 20, 'raingarden': 5}
@@ -983,17 +1040,17 @@ class test_Heuristics(Module):
                                              'raingarden': cost_raingarden}
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
-                            options = {'wetland': benefit_fun(area, removal_rate['wetland'])*prob_wl / ann_cost_wetland,
+                            options = {'wetland': benefit_fun(area, removal_rate['wetland'],runoff)*prob_wl / ann_cost_wetland,
                                        'sedimentation': benefit_fun(area,
                                                                     removal_rate[
-                                                                        'sedimentation'])*prob_sd / ann_cost_sedimentation,
+                                                                        'sedimentation'],runoff)*prob_sd / ann_cost_sedimentation,
                                        'raingarden': benefit_fun(area,
-                                                                 removal_rate['raingarden'])*prob_rg / ann_cost_raingarden}
+                                                                 removal_rate['raingarden'],runoff)*prob_rg / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'wetland': 10, 'sedimentation': 20, 'raingarden': 5}
@@ -1013,13 +1070,13 @@ class test_Heuristics(Module):
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
                             options = {
                                 'sedimentation': benefit_fun(area,
-                                                             removal_rate['sedimentation'])*prob_sd / ann_cost_sedimentation,
-                                'raingarden': benefit_fun(area, removal_rate['raingarden'])*prob_rg / ann_cost_raingarden}
+                                                             removal_rate['sedimentation'],runoff)*prob_sd / ann_cost_sedimentation,
+                                'raingarden': benefit_fun(area, removal_rate['raingarden'],runoff)*prob_rg / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'sedimentation': 20, 'raingarden': 5}
@@ -1035,12 +1092,12 @@ class test_Heuristics(Module):
 
                             ''' Calculate B:C ratio of options and choose the option rendering the highest ratio '''
                             options = {
-                                'raingarden': benefit_fun(area, removal_rate['raingarden']) / ann_cost_raingarden}
+                                'raingarden': benefit_fun(area, removal_rate['raingarden'],runoff) / ann_cost_raingarden}
                             best_option = max(options)
                             # print 'The best option is: ' + str(best_option)
                             cost_best_option = all_cap_costs[best_option]
                             removal = removal_rate[best_option]
-                            benefit = benefit_fun(area, removal)
+                            benefit = benefit_fun(area, removal,runoff)
 
                             # Measure maintenance costs
                             opex_dict = {'raingarden': 5}
