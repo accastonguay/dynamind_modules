@@ -255,6 +255,7 @@ class Heuristics(Module):
                             p.SetField("installation_year", year)
                             self.__totalCost += cost
                             self.__totalBenefit  += b
+                            print technology
                             print 'Council: ', council, 'Year: ' ,str(year), ' area: ' , str(area) ,'conArea: ' , str(conArea)
                             print ' cost: ',str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(b)+' budget: ', str(full_budget)
                             # print str(self.technologies[self.tech])
@@ -264,12 +265,15 @@ class Heuristics(Module):
 
                         # else:
                         #     print 'The cost is above budget', full_budget, random_number
-                            # p.SetField("budget_remaining", full_budget
-                        # else:
-                            # print 'cost is over the budget'
+                        #     p.SetField("budget_remaining", full_budget
+                    #     else:
+                    #         print 'cost is over the budget'
+                    #         print 'Total cost: ', str(self.__totalCost), ' cost= ', str(cost), ' budget: ', str(full_budget)
                     # else:
-                        # print 'Criteria are not met'
-                        # print landuse, newlanduse
-                        # print "Area: ", str(area), " Min. area: ", str(self.__minArea[technology])
-                        # print zone_lu, str(zone_lu in self.__suitable_zoneLu[technology])
+                    #     print 'Criteria are not met'
+                    #     print landuse, newlanduse
+                    #     print "Area: ", str(area), " Min. area: ", str(self.__minArea[technology])
+                    #     print zone_lu, str(zone_lu in self.__suitable_zoneLu[technology])
+            self.__totalCost = 0
+            self.__totalBenefit = 0
             self.parcel.finalise()

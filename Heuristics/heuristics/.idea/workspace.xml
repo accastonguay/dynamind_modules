@@ -23,8 +23,8 @@
       <file leaf-file-name="heuristics.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Heuristics/heuristics.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="383">
-              <caret line="272" column="40" lean-forward="false" selection-start-line="272" selection-start-column="40" selection-end-line="272" selection-end-column="40" />
+            <state relative-caret-position="2076">
+              <caret line="257" column="33" lean-forward="false" selection-start-line="257" selection-start-column="28" selection-end-line="257" selection-end-column="33" />
               <folding>
                 <element signature="e#25#49#0" expanded="true" />
               </folding>
@@ -45,8 +45,8 @@
       <file leaf-file-name="test_heuristics.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../../test_heuritics/test_heuristics/test_Heuristics/test_heuristics.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3744">
-              <caret line="211" column="45" lean-forward="false" selection-start-line="211" selection-start-column="36" selection-end-line="211" selection-end-column="45" />
+            <state relative-caret-position="3284">
+              <caret line="303" column="166" lean-forward="true" selection-start-line="303" selection-start-column="151" selection-end-line="303" selection-end-column="166" />
               <folding />
             </state>
           </provider>
@@ -77,6 +77,7 @@
       <find>maint_cost</find>
       <find>benefit_fun</find>
       <find>convArea</find>
+      <find>self.__totalCost</find>
     </findStrings>
     <replaceStrings>
       <replace>self.__total_benefit</replace>
@@ -446,10 +447,10 @@
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.08355795" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30147895" sideWeight="0.5040431" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.0" sideWeight="0.5040431" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32524273" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30147895" sideWeight="0.49595687" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.0" sideWeight="0.49595687" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39927185" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -541,14 +542,6 @@
     <entry file="file://$PROJECT_DIR$/../../../flooding/annual_average_damage.py" />
     <entry file="file://$PROJECT_DIR$/../../../agent_based_model/plot abm2.py" />
     <entry file="file://$PROJECT_DIR$/CouncilDecisionParcel/council_decision_parcel.py" />
-    <entry file="file://$PROJECT_DIR$/../../test_heuritics/test_heuristics/test_Heuristics/test_heuristics.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3744">
-          <caret line="211" column="45" lean-forward="false" selection-start-line="211" selection-start-column="36" selection-end-line="211" selection-end-column="45" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../new_present_value/new_present_value/NewPresentValue/new_present_value.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="216">
@@ -557,10 +550,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/../../test_heuritics/test_heuristics/test_Heuristics/test_heuristics.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3284">
+          <caret line="303" column="166" lean-forward="true" selection-start-line="303" selection-start-column="151" selection-end-line="303" selection-end-column="166" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Heuristics/heuristics.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="383">
-          <caret line="272" column="40" lean-forward="false" selection-start-line="272" selection-start-column="40" selection-end-line="272" selection-end-column="40" />
+        <state relative-caret-position="2076">
+          <caret line="257" column="33" lean-forward="false" selection-start-line="257" selection-start-column="28" selection-end-line="257" selection-end-column="33" />
           <folding>
             <element signature="e#25#49#0" expanded="true" />
           </folding>
