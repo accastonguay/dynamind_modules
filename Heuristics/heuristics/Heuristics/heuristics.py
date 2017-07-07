@@ -102,11 +102,12 @@ class Heuristics(Module):
             self.parcel.addAttribute("zone_lu", Attribute.STRING, READ)
             self.parcel.addAttribute("max_prob_technology", Attribute.STRING, READ)
             self.parcel.addAttribute("impervious_catchment", Attribute.DOUBLE, READ)
-
+            self.parcel.addAttribute("grid_id", Attribute.INT, READ)
 
             self.parcel.addAttribute("new_landuse", Attribute.STRING, WRITE)
             self.parcel.addAttribute("council", Attribute.STRING, READ)
 
+            self.parcel.addAttribute("N_removed", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("benefit", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("cost", Attribute.DOUBLE, WRITE)
             # self.parcel.addAttribute("avg_wtp_stream", Attribute.DOUBLE, READ)
@@ -119,6 +120,9 @@ class Heuristics(Module):
             self.parcel.addAttribute("prob_rg", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("prob_pond", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("prob_wetland", Attribute.DOUBLE, READ)
+
+            self.parcel.addAttribute("convArea", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("percentTreated", Attribute.DOUBLE, WRITE)
 
             self.parcel.addAttribute("installation_year", Attribute.INT, WRITE)
             self.parcel.addAttribute("OPEX", Attribute.DOUBLE, WRITE)
@@ -163,14 +167,20 @@ class Heuristics(Module):
                     cost = 2 * area
             return cost
 
-        def benefit_fun(self, area, rem_rate, runoff):
-            b = 6645 * rem_rate * runoff * 0.002 * area
+        def n_removed(self, area, rem_rate, runoff):
+            n = rem_rate * runoff * 0.002 * area
+            return n
+
+        def benefit_fun(self, n_removed):
+            b = 6645 * n_removed
             return b
 
 
         def run(self):
             #Data Stream Manipulation
             self.parcel.reset_reading()
+
+            grids = {}
             for p in self.parcel:
 
                 # Load full annual budget and all other values
@@ -184,6 +194,8 @@ class Heuristics(Module):
                 newlanduse = p.GetFieldAsString("new_landuse")
                 zone_lu = p.GetFieldAsString("zone_lu")
                 imperviousCatchment = p.GetFieldAsDouble("impervious_catchment")
+                grid_id = p.GetFieldAsInteger("grid_id")
+
 
                 area = p.GetFieldAsDouble("area")
                 # loss_aversion = p.GetFieldAsDouble("loss_aversion")
@@ -225,16 +237,24 @@ class Heuristics(Module):
 
                     technology = max_prob_technology
 
+                    if grid_id in grids:
+                        requiredArea = self.__requiredSize[technology] * (imperviousCatchment - grids[grid_id]*imperviousCatchment)
+                    # elif imperviousCatchment == 0:
+                    #     requiredArea = self.__requiredSize[technology] * area
+                    else:
+                        requiredArea = self.__requiredSize[technology] * imperviousCatchment
+
+                    if requiredArea > area:
+                        conArea = area
+                    else:
+                        conArea = requiredArea
+                        
                     # if landuse has not yet been converted AND available area is larger than minimum area and landuse is suitable
-                    if landuse == newlanduse and area >= self.__minArea[technology] and zone_lu in self.__suitable_zoneLu[technology]:
+                    if landuse == newlanduse and conArea >= self.__minArea[technology] and zone_lu in self.__suitable_zoneLu[technology]:
                         'Criteria are met'
                         # define the area
-                        requiredArea = self.__requiredSize[technology]*imperviousCatchment
 
-                        if requiredArea == 0 or requiredArea > area:
-                            conArea = area
-                        else:
-                            conArea = requiredArea
+                        percent_treated = conArea / requiredArea
 
                         cost = self.const_cost(technology, conArea)
                         opex = self.maint_cost(technology, conArea)
@@ -245,16 +265,21 @@ class Heuristics(Module):
 
                             # b = self.benefitdic[self.technologies[self.tech]]
                             removal = self.__removalRate[technology]
-                            b = self.benefit_fun(conArea,removal, runoff)
+                            N_removed = self.n_removed(conArea,removal, runoff)
+                            b = self.benefit_fun(N_removed)
 
                             p.SetField("new_landuse", technology)
+                            p.SetField("N_removed", N_removed)
                             p.SetField("benefit", b)
                             p.SetField("cost", cost)
                             p.SetField("temp_cost", cost)
                             p.SetField("OPEX", opex)
                             p.SetField("installation_year", year)
+                            p.SetField("convArea", conArea)
+                            p.SetField("percentTreated", percent_treated)
+                            grids[grid_id] = percent_treated
                             self.__totalCost += cost
-                            self.__totalBenefit  += b
+                            self.__totalBenefit += b
                             print technology
                             print 'Council: ', council, 'Year: ' ,str(year), ' area: ' , str(area) ,'conArea: ' , str(conArea)
                             print ' cost: ',str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(b)+' budget: ', str(full_budget)
