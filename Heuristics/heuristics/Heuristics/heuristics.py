@@ -122,7 +122,7 @@ class Heuristics(Module):
             self.parcel.addAttribute("prob_wetland", Attribute.DOUBLE, READ)
 
             self.parcel.addAttribute("convArea", Attribute.DOUBLE, WRITE)
-            self.parcel.addAttribute("percentTreated", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("percent_treated", Attribute.DOUBLE, WRITE)
 
             self.parcel.addAttribute("installation_year", Attribute.INT, WRITE)
             self.parcel.addAttribute("OPEX", Attribute.DOUBLE, WRITE)
@@ -150,6 +150,15 @@ class Heuristics(Module):
             elif technology == 'pond':
                 cost = 685.1 * area ** 0.7893
             return cost
+
+        def inv_cost(self, technology, budget):
+            if technology == 'wetland':
+                area = 0.00000796*(budget ** 1.554001554)
+            elif technology == 'raingarden':
+                area = 0.0000001*(budget**1.85185185185)
+            elif technology == 'pond':
+                area = 0.00025546 * (budget ** 1.266945394653)
+            return area
 
         def maint_cost(self, technology, area):
             if technology == 'wetland':
@@ -248,7 +257,7 @@ class Heuristics(Module):
                         conArea = area
                     else:
                         conArea = requiredArea
-                        
+
                     # if landuse has not yet been converted AND available area is larger than minimum area and landuse is suitable
                     if landuse == newlanduse and conArea >= self.__minArea[technology] and zone_lu in self.__suitable_zoneLu[technology]:
                         'Criteria are met'
@@ -276,7 +285,7 @@ class Heuristics(Module):
                             p.SetField("OPEX", opex)
                             p.SetField("installation_year", year)
                             p.SetField("convArea", conArea)
-                            p.SetField("percentTreated", percent_treated)
+                            p.SetField("percent_treated", percent_treated)
                             grids[grid_id] = percent_treated
                             self.__totalCost += cost
                             self.__totalBenefit += b
@@ -299,6 +308,68 @@ class Heuristics(Module):
                     #     print landuse, newlanduse
                     #     print "Area: ", str(area), " Min. area: ", str(self.__minArea[technology])
                     #     print zone_lu, str(zone_lu in self.__suitable_zoneLu[technology])
+                if decision_rule == 2:
+
+                    technology = max_prob_technology
+
+                    # If a parcel within this grid has already been converted, the impervious catchment already treated
+                    # from the previous technology is substracted from the total impervious catchment
+                    if grid_id in grids:
+                        requiredArea = self.__requiredSize[technology] * (
+                        imperviousCatchment - grids[grid_id] * imperviousCatchment)
+
+                    # if no existing wsud in the grid, the required area is according to design curves
+                    else:
+                        requiredArea = self.__requiredSize[technology] * imperviousCatchment
+
+                    if self.inv_cost(technology, full_budget) < area and self.inv_cost(technology, full_budget) < requiredArea:
+                        conArea = self.inv_cost(technology, full_budget)
+                    elif requiredArea > area:
+                        conArea = area
+                    else:
+                        conArea = requiredArea
+
+                    # if landuse has not yet been converted AND available area is larger than minimum area and landuse is suitable
+                    if landuse == newlanduse and conArea >= self.__minArea[technology] and zone_lu in \
+                            self.__suitable_zoneLu[technology]:
+                        'Criteria are met'
+                        # define the area
+                        conArea = round(conArea,2)
+                        percent_treated = conArea / requiredArea
+
+                        cost = self.const_cost(technology, conArea)
+                        opex = self.maint_cost(technology, conArea)
+
+                        if cost <= full_budget:
+                            # print 'cost is within budget'
+                            # self.benefitdic = {'wetland':136*con_area, 'sedimentation':1341*con_area, 'raingarden': 10244*con_area}
+
+                            # b = self.benefitdic[self.technologies[self.tech]]
+                            removal = self.__removalRate[technology]
+                            N_removed = self.n_removed(conArea, removal, runoff)
+                            b = self.benefit_fun(N_removed)
+
+                            p.SetField("new_landuse", technology)
+                            p.SetField("N_removed", N_removed)
+                            p.SetField("benefit", b)
+                            p.SetField("cost", cost)
+                            p.SetField("temp_cost", cost)
+                            p.SetField("OPEX", opex)
+                            p.SetField("installation_year", year)
+                            p.SetField("convArea", conArea)
+                            p.SetField("percent_treated", percent_treated)
+                            grids[grid_id] = percent_treated
+                            self.__totalCost += cost
+                            self.__totalBenefit += b
+                            print technology
+                            print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
+                                conArea)
+                            print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(
+                                b) + ' budget: ', str(full_budget)
+                            # print str(self.technologies[self.tech])
+                            # print random_number
+                            full_budget -= cost
+
             self.__totalCost = 0
             self.__totalBenefit = 0
             self.parcel.finalise()
