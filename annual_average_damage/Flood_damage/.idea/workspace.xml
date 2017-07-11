@@ -45,8 +45,8 @@
       <file leaf-file-name="heuristics.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/../../Heuristics/heuristics/Heuristics/heuristics.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="254">
-              <caret line="117" column="62" lean-forward="false" selection-start-line="117" selection-start-column="42" selection-end-line="117" selection-end-column="62" />
+            <state relative-caret-position="224">
+              <caret line="319" column="50" lean-forward="false" selection-start-line="319" selection-start-column="50" selection-end-line="319" selection-end-column="50" />
               <folding>
                 <element signature="e#25#49#0" expanded="true" />
               </folding>
@@ -92,6 +92,7 @@
       <find>maint_cost</find>
       <find>pv_total_costs</find>
       <find>impervious_catchment</find>
+      <find>pv_benefit</find>
     </findStrings>
     <replaceStrings>
       <replace>service_life</replace>
@@ -776,8 +777,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/../../Heuristics/heuristics/Heuristics/heuristics.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="254">
-          <caret line="117" column="62" lean-forward="false" selection-start-line="117" selection-start-column="42" selection-end-line="117" selection-end-column="62" />
+        <state relative-caret-position="224">
+          <caret line="319" column="50" lean-forward="false" selection-start-line="319" selection-start-column="50" selection-end-line="319" selection-end-column="50" />
           <folding>
             <element signature="e#25#49#0" expanded="true" />
           </folding>

@@ -317,7 +317,7 @@ class Heuristics(Module):
                             npv = pvb - pvc
 
                             p.SetField("pv_cost", pvc)
-                            p.SetField("pvb", pvb)
+                            p.SetField("pv_benefit", pvb)
                             p.SetField("npv", npv)
 
                             print technology
@@ -397,7 +397,7 @@ class Heuristics(Module):
                             npv = pvb - pvc
 
                             p.SetField("pv_cost", pvc)
-                            p.SetField("pvb", pvb)
+                            p.SetField("pv_benefit", pvb)
                             p.SetField("npv", npv)
 
                             self.__totalCost += cost
@@ -498,7 +498,7 @@ class Heuristics(Module):
                                 npv = pvb - pvc
 
                                 p.SetField("pv_cost", pvc)
-                                p.SetField("pvb", pvb)
+                                p.SetField("pv_benefit", pvb)
                                 p.SetField("npv", npv)
                                 grids[grid_id] = percent_treated
                                 self.__totalCost += cost
@@ -594,7 +594,7 @@ class Heuristics(Module):
                                 npv = pvb - pvc
 
                                 p.SetField("pv_cost", pvc)
-                                p.SetField("pvb", pvb)
+                                p.SetField("pv_benefit", pvb)
                                 p.SetField("npv", npv)
 
                                 grids[grid_id] = percent_treated
