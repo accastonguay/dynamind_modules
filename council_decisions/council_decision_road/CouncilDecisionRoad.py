@@ -1,11 +1,11 @@
 """
 @file
-@author  Chrisitan Urich <christian.urich@gmail.com>
+@author  Adam Charette-Castonguay <adam.charette.castonguay@monash.edu>
 @version 1.0
 @section LICENSE
 
 This file is part of VIBe2
-Copyright (C) 2011  Christian Urich
+Copyright (C) 2017  Adam Charette-Castonguay
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

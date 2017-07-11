@@ -17,6 +17,21 @@ class Heuristics(Module):
             #To use the GDAL API
             self.setIsGDALModule(True)
 
+            self.createParameter("service_life", DOUBLE)
+            self.service_life = 50
+
+            self.createParameter("discount_rate", DOUBLE)
+            self.discount_rate = 0.05
+
+            self.__years = []
+            self.__discount_factor = []
+            for y in xrange(1, int(self.service_life) + 1, 1):
+                self.__years.append(y)
+                self.__discount_factor.append(1. / (1. + self.discount_rate) ** (y - 1))
+
+            self.__cpi = {2005: 73.425, 2006: 77.325, 2007: 80.175, 2008: 85.55,
+                          2009: 88.65, 2010: 90.875, 2011: 97.325, 2012: 102.25}
+
             self.__suitable_zoneLu = {"wetland": ["GRZ1_Unclassified Private Land", "GRZ2_Unclassified Private Land",
                                                   "PCRZ_Nature Reserve", "PCRZ_Unclassified Private Land",
                                                   "PPRZ_Community Service Facilities or Other",
@@ -93,15 +108,14 @@ class Heuristics(Module):
                                   "pond": 7,
                                   "raingarden": 2}
 
-            self.createParameter("rule", INT)
-            self.rule = 1
+
 
             self.parcel = ViewContainer("parcel", COMPONENT, READ)
             self.parcel.addAttribute("original_landuse", Attribute.STRING, READ)
             self.parcel.addAttribute("area", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("zone_lu", Attribute.STRING, READ)
             self.parcel.addAttribute("max_prob_technology", Attribute.STRING, READ)
-            self.parcel.addAttribute("impervious_catchment", Attribute.DOUBLE, READ)
+            self.parcel.addAttribute("new_impervious_catchment", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("grid_id", Attribute.INT, READ)
 
             self.parcel.addAttribute("new_landuse", Attribute.STRING, WRITE)
@@ -127,6 +141,10 @@ class Heuristics(Module):
             self.parcel.addAttribute("installation_year", Attribute.INT, WRITE)
             self.parcel.addAttribute("OPEX", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("temp_cost", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("pv_cost", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("pv_benefit", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("npv", Attribute.DOUBLE, WRITE)
+
 
             #Compile views
             views = []
@@ -142,14 +160,14 @@ class Heuristics(Module):
         Data Manipulation Process (DMP)
         """
 
-        def const_cost(self, technology, area):
+        def const_cost(self, technology, area, year):
             if technology == 'wetland':
                 cost = 1911 * area ** 0.6435
             elif technology == 'raingarden':
                 cost = area * 6023.1 * area ** -0.46
             elif technology == 'pond':
                 cost = 685.1 * area ** 0.7893
-            return cost
+            return cost* self.__cpi[year] / self.__cpi[2012]
 
         def inv_cost(self, technology, budget):
             if technology == 'wetland':
@@ -160,7 +178,7 @@ class Heuristics(Module):
                 area = 0.00025546 * (budget ** 1.266945394653)
             return area
 
-        def maint_cost(self, technology, area):
+        def maint_cost(self, technology, area, year):
             if technology == 'wetland':
                 cost = area * 1289.7 * area ** -0.794
             elif technology == 'raingarden':
@@ -174,7 +192,18 @@ class Heuristics(Module):
                     cost = 5 * area
                 elif 1500 <= area:
                     cost = 2 * area
-            return cost
+
+            mcost = cost* self.__cpi[year] / self.__cpi[2012]
+
+            maintenance_cost = []
+            for y in self.__years:
+                maintenance_cost.append(mcost)
+
+            discount_maintenance_cost = [(d * m) for d, m in zip(self.__discount_factor, maintenance_cost)]
+
+            return sum(discount_maintenance_cost)
+
+
 
         def n_removed(self, area, rem_rate, runoff):
             n = rem_rate * runoff * 0.002 * area
@@ -183,6 +212,21 @@ class Heuristics(Module):
         def benefit_fun(self, n_removed):
             b = 6645 * n_removed
             return b
+
+        def pv_total_costs(self, year, technology, area):
+            try:
+                return self.const_cost(technology, area, year) + self.maint_cost(technology, area,year)
+            except (LookupError):
+                raise ValueError("can't calculate total costs")
+
+        def pv_benefit(self, n_removed):
+            b = self.benefit_fun(n_removed)
+            benefit_list = []
+            for y in self.__years:
+                benefit_list.append(b)
+            discount_n_removal = [(d * b) for d, b in zip(self.__discount_factor, benefit_list)]
+
+            return sum(discount_n_removal)
 
 
         def run(self):
@@ -202,7 +246,7 @@ class Heuristics(Module):
                 landuse = p.GetFieldAsString("original_landuse")
                 newlanduse = p.GetFieldAsString("new_landuse")
                 zone_lu = p.GetFieldAsString("zone_lu")
-                imperviousCatchment = p.GetFieldAsDouble("impervious_catchment")
+                imperviousCatchment = p.GetFieldAsDouble("new_impervious_catchment")
                 grid_id = p.GetFieldAsInteger("grid_id")
 
 
@@ -218,28 +262,6 @@ class Heuristics(Module):
 
                 # Estimate runoff for current year
                 runoff = self.__rainfall[year] * 0.9 * 0.20
-
-                # list_suitable_parcels = []
-                # list_installed_tech = []
-
-                # d_probs = {'wetland' : prob_wl, 'pond' : prob_pd, "raingarden": prob_rg}
-
-                # Set of suitable landuses
-                # landuses = ["PPRZ","PCRZ","PDZ2","PUZ1", "PUZ2", "PUZ4" ,"PUZ6","PUZ7"]
-
-                # for i in suitable_zoneLu.iterkeys():
-                #     if zone_lu in self.__suitable_zoneLu[i] and self.__minArea[i] > 0 :
-                #         list_suitable_parcels.append(i)
-
-                # for i in list_suitable_parcels:
-                #     if random.random() < d_probs[i]:
-                #         list_installed_tech.append(i)
-
-                # List chosen technologies
-                # list_installed_tech = [x for x in list_suitable_parcels if random.random() < d_probs[x]]
-                #
-                # if len(list_installed_tech) > 1:
-                #     technology = max()
 
                 ### Strategy 1: Chose technology with highest probability ###
                 if decision_rule == 1:
@@ -265,8 +287,8 @@ class Heuristics(Module):
 
                         percent_treated = conArea / requiredArea
 
-                        cost = self.const_cost(technology, conArea)
-                        opex = self.maint_cost(technology, conArea)
+                        cost = self.const_cost(technology, conArea, year)
+                        opex = self.maint_cost(technology, conArea, year)
 
                         if cost <= full_budget:
                             # print 'cost is within budget'
@@ -289,6 +311,15 @@ class Heuristics(Module):
                             grids[grid_id] = percent_treated
                             self.__totalCost += cost
                             self.__totalBenefit += b
+
+                            pvc = self.pv_total_costs(year, technology, conArea)
+                            pvb = self.pv_benefit(b)
+                            npv = pvb - pvc
+
+                            p.SetField("pv_cost", pvc)
+                            p.SetField("pvb", pvb)
+                            p.SetField("npv", npv)
+
                             print technology
                             print 'Council: ', council, 'Year: ' ,str(year), ' area: ' , str(area) ,'conArea: ' , str(conArea)
                             print ' cost: ',str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(b)+' budget: ', str(full_budget)
@@ -308,6 +339,8 @@ class Heuristics(Module):
                     #     print landuse, newlanduse
                     #     print "Area: ", str(area), " Min. area: ", str(self.__minArea[technology])
                     #     print zone_lu, str(zone_lu in self.__suitable_zoneLu[technology])
+
+                ### Strategy 2: Whole budget is spent on most likely parcel
                 if decision_rule == 2:
 
                     technology = max_prob_technology
@@ -337,8 +370,8 @@ class Heuristics(Module):
                         conArea = round(conArea,2)
                         percent_treated = conArea / requiredArea
 
-                        cost = self.const_cost(technology, conArea)
-                        opex = self.maint_cost(technology, conArea)
+                        cost = self.const_cost(technology, conArea, year)
+                        opex = self.maint_cost(technology, conArea, year)
 
                         if cost <= full_budget:
                             # print 'cost is within budget'
@@ -359,6 +392,14 @@ class Heuristics(Module):
                             p.SetField("convArea", conArea)
                             p.SetField("percent_treated", percent_treated)
                             grids[grid_id] = percent_treated
+                            pvc = self.pv_total_costs(year, technology, conArea)
+                            pvb = self.pv_benefit(b)
+                            npv = pvb - pvc
+
+                            p.SetField("pv_cost", pvc)
+                            p.SetField("pvb", pvb)
+                            p.SetField("npv", npv)
+
                             self.__totalCost += cost
                             self.__totalBenefit += b
                             print technology
@@ -369,6 +410,204 @@ class Heuristics(Module):
                             # print str(self.technologies[self.tech])
                             # print random_number
                             full_budget -= cost
+
+                if decision_rule == 3:
+
+                    dict_required_area = {}
+                    if grid_id in grids:
+                        for i in self.__requiredSize:
+                            dict_required_area[i] = self.__requiredSize[i] * (
+                        imperviousCatchment - grids[grid_id] * imperviousCatchment)
+                    # elif imperviousCatchment == 0:
+                    #     requiredArea = self.__requiredSize[technology] * area
+                    else:
+                        for i in self.__requiredSize:
+                            dict_required_area[i] = self.__requiredSize[i] * imperviousCatchment
+
+                    dict_conv_area = {}
+
+                    for i in dict_required_area:
+                        if dict_required_area[i] > area:
+                            dict_conv_area[i] = area
+                        else:
+                            dict_conv_area[i] = dict_required_area[i]
+
+                    # if landuse has not yet been converted AND available area is larger than minimum area
+                    if landuse == newlanduse:
+
+                        # Criteria are met
+                        list_suitable_parcels = []
+                        list_installed_tech = []
+                        # define the area
+
+                        # Dictionary of technologies and probabilities
+                        d_probs = {'wetland': prob_wl, 'pond': prob_pd, "raingarden": prob_rg}
+
+                        # Select potential technologies based on land use
+                        for i in self.__suitable_zoneLu.iterkeys():
+                            if zone_lu in self.__suitable_zoneLu[i] and dict_conv_area[i] > self.__minArea[i]:
+                                list_suitable_parcels.append(i)
+
+                        # Select technologies based on probability and landuse suitability
+                        for i in list_suitable_parcels:
+                            if random.random() < d_probs[i]:
+                                list_installed_tech.append(i)
+
+                        # List chosen technologies
+                        # list_installed_tech = [x for x in list_suitable_parcels if random.random() < d_probs[x]]
+
+                        # Create dictionary of benefits for cost-benefit analysis if more than one option
+                        benefits = {}
+                        if len(list_installed_tech) >= 1:
+                            print "More than one option available"
+                            for i in list_installed_tech:
+                                pvc = self.pv_total_costs(year, i, dict_conv_area[i])
+
+                                removal = self.__removalRate[i]
+                                N_removed = self.n_removed(dict_conv_area[i], removal, runoff)
+                                b = self.benefit_fun(N_removed)
+                                pvb = self.pv_benefit(b)
+                                benefits[i]= pvb-pvc
+                            technology = max(benefits)
+                        # Otherwise select the only option available
+                            conArea = dict_conv_area[technology]
+                            percent_treated = conArea / dict_required_area[technology]
+
+                            cost = self.const_cost(technology, conArea, year)
+                            opex = self.maint_cost(technology, conArea, year)
+
+                            if cost <= full_budget:
+                                # print 'cost is within budget'
+                                # self.benefitdic = {'wetland':136*con_area, 'sedimentation':1341*con_area, 'raingarden': 10244*con_area}
+
+                                # b = self.benefitdic[self.technologies[self.tech]]
+                                removal = self.__removalRate[technology]
+                                N_removed = self.n_removed(conArea, removal, runoff)
+                                b = self.benefit_fun(N_removed)
+
+                                p.SetField("new_landuse", technology)
+                                p.SetField("N_removed", N_removed)
+                                p.SetField("benefit", b)
+                                p.SetField("cost", cost)
+                                p.SetField("temp_cost", cost)
+                                p.SetField("OPEX", opex)
+                                p.SetField("installation_year", year)
+                                p.SetField("convArea", conArea)
+                                p.SetField("percent_treated", percent_treated)
+
+                                npv = pvb - pvc
+
+                                p.SetField("pv_cost", pvc)
+                                p.SetField("pvb", pvb)
+                                p.SetField("npv", npv)
+                                grids[grid_id] = percent_treated
+                                self.__totalCost += cost
+                                self.__totalBenefit += b
+                                print technology
+                                print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
+                                    conArea)
+                                print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(
+                                    b) + ' budget: ', str(full_budget)
+
+                                full_budget -= cost
+
+                if decision_rule == 4:
+
+                    dict_required_area = {}
+                    if grid_id in grids:
+                        for i in self.__requiredSize:
+                            dict_required_area[i] = self.__requiredSize[i] * (
+                        imperviousCatchment - grids[grid_id] * imperviousCatchment)
+                    # elif imperviousCatchment == 0:
+                    #     requiredArea = self.__requiredSize[technology] * area
+                    else:
+                        for i in self.__requiredSize:
+                            dict_required_area[i] = self.__requiredSize[i] * imperviousCatchment
+
+                    dict_conv_area = {}
+
+                    for i in dict_required_area:
+                        if dict_required_area[i] > area:
+                            dict_conv_area[i] = area
+                        else:
+                            dict_conv_area[i] = dict_required_area[i]
+
+                    # if landuse has not yet been converted AND available area is larger than minimum area
+                    if landuse == newlanduse:
+
+                        # Criteria are met
+                        list_suitable_parcels = []
+                        list_installed_tech = []
+                        # define the area
+
+                        # Dictionary of technologies and probabilities
+                        d_probs = {'wetland': prob_wl, 'pond': prob_pd, "raingarden": prob_rg}
+
+                        # Select potential technologies based on land use
+                        for i in self.__suitable_zoneLu.iterkeys():
+                            if zone_lu in self.__suitable_zoneLu[i] and dict_conv_area[i] > self.__minArea[i]:
+                                list_suitable_parcels.append(i)
+
+                        # Select technologies based on probability and landuse suitability
+                        for i in list_suitable_parcels:
+                            if random.random() < d_probs[i]:
+                                list_installed_tech.append(i)
+
+                        # List chosen technologies
+                        # list_installed_tech = [x for x in list_suitable_parcels if random.random() < d_probs[x]]
+
+                        # Create dictionary of benefits for cost-benefit analysis if more than one option
+                        costs = {}
+                        if len(list_installed_tech) >= 1:
+                            print "More than one option available"
+                            for i in list_installed_tech:
+                                pvc = self.pv_total_costs(year, i, dict_conv_area[i])
+                                costs[i] = pvc
+                            technology = min(costs)
+                        # Otherwise select the only option available
+                            conArea = dict_conv_area[technology]
+                            percent_treated = conArea / requiredArea
+
+                            cost = self.const_cost(technology, conArea, year)
+                            opex = self.maint_cost(technology, conArea, year)
+
+                            if cost <= full_budget:
+                                # print 'cost is within budget'
+                                # self.benefitdic = {'wetland':136*con_area, 'sedimentation':1341*con_area, 'raingarden': 10244*con_area}
+
+                                # b = self.benefitdic[self.technologies[self.tech]]
+                                removal = self.__removalRate[technology]
+                                N_removed = self.n_removed(conArea, removal, runoff)
+                                b = self.benefit_fun(N_removed)
+
+                                p.SetField("new_landuse", technology)
+                                p.SetField("N_removed", N_removed)
+                                p.SetField("benefit", b)
+                                p.SetField("cost", cost)
+                                p.SetField("temp_cost", cost)
+                                p.SetField("OPEX", opex)
+                                p.SetField("installation_year", year)
+                                p.SetField("convArea", conArea)
+                                p.SetField("percent_treated", percent_treated)
+
+                                pvb = self.pv_benefit(b)
+                                npv = pvb - pvc
+
+                                p.SetField("pv_cost", pvc)
+                                p.SetField("pvb", pvb)
+                                p.SetField("npv", npv)
+
+                                grids[grid_id] = percent_treated
+                                self.__totalCost += cost
+                                self.__totalBenefit += b
+                                print technology
+                                print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
+                                    conArea)
+                                print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(
+                                    b) + ' budget: ', str(full_budget)
+
+                                full_budget -= cost
+
 
             self.__totalCost = 0
             self.__totalBenefit = 0
