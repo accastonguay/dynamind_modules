@@ -33,7 +33,7 @@
       <file leaf-file-name="my_module.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/MyModules/my_module.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-54">
+            <state relative-caret-position="522">
               <caret line="31" column="56" lean-forward="false" selection-start-line="31" selection-start-column="56" selection-end-line="31" selection-end-column="56" />
               <folding>
                 <element signature="e#25#49#0" expanded="true" />
@@ -45,8 +45,8 @@
       <file leaf-file-name="heuristics.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/../../Heuristics/heuristics/Heuristics/heuristics.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="224">
-              <caret line="319" column="50" lean-forward="false" selection-start-line="319" selection-start-column="50" selection-end-line="319" selection-end-column="50" />
+            <state relative-caret-position="245">
+              <caret line="307" column="49" lean-forward="false" selection-start-line="307" selection-start-column="49" selection-end-line="307" selection-end-column="49" />
               <folding>
                 <element signature="e#25#49#0" expanded="true" />
               </folding>
@@ -57,8 +57,8 @@
       <file leaf-file-name="new_present_value.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../../new_present_value/new_present_value/NewPresentValue/new_present_value.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-742">
-              <caret line="267" column="0" lean-forward="true" selection-start-line="267" selection-start-column="0" selection-end-line="270" selection-end-column="32" />
+            <state relative-caret-position="4806">
+              <caret line="267" column="0" lean-forward="false" selection-start-line="267" selection-start-column="0" selection-end-line="270" selection-end-column="32" />
               <folding />
             </state>
           </provider>
@@ -93,9 +93,13 @@
       <find>pv_total_costs</find>
       <find>impervious_catchment</find>
       <find>pv_benefit</find>
+      <find>self.pv_benefit(</find>
+      <find>pv_benefit(</find>
+      <find>convArea</find>
     </findStrings>
     <replaceStrings>
       <replace>service_life</replace>
+      <replace>conv_area</replace>
     </replaceStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -131,6 +135,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scratches" />
       <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
@@ -142,7 +147,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -339,12 +343,12 @@
     <frame x="64" y="-11" width="1857" height="988" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.051752023" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.051212937" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33889815" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.03185438" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.030716723" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -378,6 +382,32 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/../../new_present_value/new_present_value/NewPresentValue/new_present_value.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4806">
+          <caret line="267" column="0" lean-forward="true" selection-start-line="267" selection-start-column="0" selection-end-line="270" selection-end-column="32" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/MyModules/damage_curves.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="11" column="36" lean-forward="false" selection-start-line="11" selection-start-column="36" selection-end-line="11" selection-end-column="36" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../Heuristics/heuristics/Heuristics/heuristics.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5742">
+          <caret line="319" column="50" lean-forward="false" selection-start-line="319" selection-start-column="50" selection-end-line="319" selection-end-column="50" />
+          <folding>
+            <element signature="e#25#49#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/MyModules/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="126">
@@ -759,7 +789,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/MyModules/my_module.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-54">
+        <state relative-caret-position="522">
           <caret line="31" column="56" lean-forward="false" selection-start-line="31" selection-start-column="56" selection-end-line="31" selection-end-column="56" />
           <folding>
             <element signature="e#25#49#0" expanded="true" />
@@ -769,16 +799,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/../../new_present_value/new_present_value/NewPresentValue/new_present_value.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-742">
-          <caret line="267" column="0" lean-forward="true" selection-start-line="267" selection-start-column="0" selection-end-line="270" selection-end-column="32" />
+        <state relative-caret-position="4806">
+          <caret line="267" column="0" lean-forward="false" selection-start-line="267" selection-start-column="0" selection-end-line="270" selection-end-column="32" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../../Heuristics/heuristics/Heuristics/heuristics.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="224">
-          <caret line="319" column="50" lean-forward="false" selection-start-line="319" selection-start-column="50" selection-end-line="319" selection-end-column="50" />
+        <state relative-caret-position="245">
+          <caret line="307" column="49" lean-forward="false" selection-start-line="307" selection-start-column="49" selection-end-line="307" selection-end-column="49" />
           <folding>
             <element signature="e#25#49#0" expanded="true" />
           </folding>

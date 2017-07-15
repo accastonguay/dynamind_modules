@@ -135,7 +135,7 @@ class Heuristics(Module):
             self.parcel.addAttribute("prob_pond", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("prob_wetland", Attribute.DOUBLE, READ)
 
-            self.parcel.addAttribute("convArea", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("conv_area", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("percent_treated", Attribute.DOUBLE, WRITE)
 
             self.parcel.addAttribute("installation_year", Attribute.INT, WRITE)
@@ -219,8 +219,7 @@ class Heuristics(Module):
             except (LookupError):
                 raise ValueError("can't calculate total costs")
 
-        def pv_benefit(self, n_removed):
-            b = self.benefit_fun(n_removed)
+        def pv_benefit(self, b):
             benefit_list = []
             for y in self.__years:
                 benefit_list.append(b)
@@ -306,7 +305,7 @@ class Heuristics(Module):
                             p.SetField("temp_cost", cost)
                             p.SetField("OPEX", opex)
                             p.SetField("installation_year", year)
-                            p.SetField("convArea", conArea)
+                            p.SetField("conv_area", conArea)
                             p.SetField("percent_treated", percent_treated)
                             grids[grid_id] = percent_treated
                             self.__totalCost += cost
@@ -320,25 +319,13 @@ class Heuristics(Module):
                             p.SetField("pv_benefit", pvb)
                             p.SetField("npv", npv)
 
-                            print technology
+                            print technology, 'PVB, PVC, NPV: ', str(pvb), str(pvc), str(npv)
                             print 'Council: ', council, 'Year: ' ,str(year), ' area: ' , str(area) ,'conArea: ' , str(conArea)
                             print ' cost: ',str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(b)+' budget: ', str(full_budget)
                             # print str(self.technologies[self.tech])
                             # print random_number
                             full_budget -= cost
-                            # p.SetField("budget_remaining", full_budget)
 
-                        # else:
-                        #     print 'The cost is above budget', full_budget, random_number
-                        #     p.SetField("budget_remaining", full_budget
-                    #     else:
-                    #         print 'cost is over the budget'
-                    #         print 'Total cost: ', str(self.__totalCost), ' cost= ', str(cost), ' budget: ', str(full_budget)
-                    # else:
-                    #     print 'Criteria are not met'
-                    #     print landuse, newlanduse
-                    #     print "Area: ", str(area), " Min. area: ", str(self.__minArea[technology])
-                    #     print zone_lu, str(zone_lu in self.__suitable_zoneLu[technology])
 
                 ### Strategy 2: Whole budget is spent on most likely parcel
                 if decision_rule == 2:
@@ -389,7 +376,7 @@ class Heuristics(Module):
                             p.SetField("temp_cost", cost)
                             p.SetField("OPEX", opex)
                             p.SetField("installation_year", year)
-                            p.SetField("convArea", conArea)
+                            p.SetField("conv_area", conArea)
                             p.SetField("percent_treated", percent_treated)
                             grids[grid_id] = percent_treated
                             pvc = self.pv_total_costs(year, technology, conArea)
@@ -402,7 +389,7 @@ class Heuristics(Module):
 
                             self.__totalCost += cost
                             self.__totalBenefit += b
-                            print technology
+                            print technology, 'PVB, PVC, NPV: ', str(pvb), str(pvc), str(npv)
                             print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
                                 conArea)
                             print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(
@@ -492,7 +479,7 @@ class Heuristics(Module):
                                 p.SetField("temp_cost", cost)
                                 p.SetField("OPEX", opex)
                                 p.SetField("installation_year", year)
-                                p.SetField("convArea", conArea)
+                                p.SetField("conv_area", conArea)
                                 p.SetField("percent_treated", percent_treated)
 
                                 npv = pvb - pvc
@@ -503,7 +490,7 @@ class Heuristics(Module):
                                 grids[grid_id] = percent_treated
                                 self.__totalCost += cost
                                 self.__totalBenefit += b
-                                print technology
+                                print technology, 'PVB, PVC, NPV: ', str(pvb), str(pvc), str(npv)
                                 print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
                                     conArea)
                                 print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(
@@ -566,7 +553,7 @@ class Heuristics(Module):
                             technology = min(costs)
                         # Otherwise select the only option available
                             conArea = dict_conv_area[technology]
-                            percent_treated = conArea / requiredArea
+                            percent_treated = conArea / dict_required_area[technology]
 
                             cost = self.const_cost(technology, conArea, year)
                             opex = self.maint_cost(technology, conArea, year)
@@ -587,7 +574,7 @@ class Heuristics(Module):
                                 p.SetField("temp_cost", cost)
                                 p.SetField("OPEX", opex)
                                 p.SetField("installation_year", year)
-                                p.SetField("convArea", conArea)
+                                p.SetField("conv_area", conArea)
                                 p.SetField("percent_treated", percent_treated)
 
                                 pvb = self.pv_benefit(b)
@@ -600,7 +587,7 @@ class Heuristics(Module):
                                 grids[grid_id] = percent_treated
                                 self.__totalCost += cost
                                 self.__totalBenefit += b
-                                print technology
+                                print technology, 'PVB, PVC, NPV: ', str(pvb), str(pvc), str(npv)
                                 print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
                                     conArea)
                                 print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(
