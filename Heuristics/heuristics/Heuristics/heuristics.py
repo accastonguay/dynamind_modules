@@ -262,8 +262,12 @@ class Heuristics(Module):
                 # Estimate runoff for current year
                 runoff = self.__rainfall[year] * 0.9 * 0.20
 
+
+                # print 'Budget: ', str(full_budget), "Rule: ", str(decision_rule)
+                # print 'Area: ', str(area)
                 ### Strategy 1: Chose technology with highest probability ###
                 if decision_rule == 1:
+                    # print "Enter decision process"
 
                     technology = max_prob_technology
 
@@ -278,10 +282,10 @@ class Heuristics(Module):
                         conArea = area
                     else:
                         conArea = requiredArea
-
+                    # print max_prob_technology,landuse,newlanduse, conArea,self.__minArea[technology], zone_lu
                     # if landuse has not yet been converted AND available area is larger than minimum area and landuse is suitable
                     if landuse == newlanduse and conArea >= self.__minArea[technology] and zone_lu in self.__suitable_zoneLu[technology]:
-                        'Criteria are met'
+                        # print 'Criteria are met'
                         # define the area
 
                         percent_treated = conArea / requiredArea
@@ -325,6 +329,8 @@ class Heuristics(Module):
                             # print str(self.technologies[self.tech])
                             # print random_number
                             full_budget -= cost
+                        # else:
+                            # print "criteria not met"
 
 
                 ### Strategy 2: Whole budget is spent on most likely parcel
