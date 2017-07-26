@@ -330,7 +330,7 @@ class Heuristics(Module):
                             # print random_number
                             full_budget -= cost
                         # else:
-                            # print "criteria not met"
+                        #     print "criteria not met"
 
 
                 ### Strategy 2: Whole budget is spent on most likely parcel
