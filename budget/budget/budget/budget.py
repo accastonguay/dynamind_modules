@@ -67,7 +67,7 @@ class budget(Module):
             for p in self.parcel:
                 year = p.GetFieldAsInteger("year")
                 council = p.GetFieldAsString("council")
-                # print year, type(year), council, type(council)
+                #print year, type(year), council, type(council)
                 p.SetField("budget", dict[year][council])
 
             self.parcel.finalise()

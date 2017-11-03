@@ -27,6 +27,7 @@ class test_sort(Module):
             self.wsuds = ViewContainer("wsuds", COMPONENT, READ)
 
             self.wsuds.addAttribute("year_const", Attribute.INT, READ)
+            self.wsuds.addAttribute("asset_type", Attribute.INT, READ)
 
 
             #Compile views
@@ -52,6 +53,8 @@ class test_sort(Module):
 
             for b in self.wsuds:
                 year = b.GetFieldAsInteger("year_const")
-                print 'Construction year = '+str(year)
+                asset = b.GetFieldAsInteger("asset_type")
+
+                print 'Construction year = '+str(year), 'Asset type = '+str(asset)
 
             self.wsuds.finalise()
