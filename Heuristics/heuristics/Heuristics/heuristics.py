@@ -22,6 +22,24 @@ class Heuristics(Module):
 
             self.createParameter("discount_rate", DOUBLE)
             self.discount_rate = 0.05
+            #
+            # self.createParameter("const_cost_factor", DOUBLE)
+            # self.const_cost_factor = 1
+            #
+            # self.createParameter("maint_cost_factor", DOUBLE)
+            # self.maint_cost_factor = 1
+            #
+            # self.createParameter("rf_factor", DOUBLE)
+            # self.rf_factor = 1
+            #
+            # self.createParameter("raingarden_nrem", DOUBLE)
+            # self.raingarden_nrem = 1
+            #
+            # self.createParameter("pond_nrem", DOUBLE)
+            # self.pond_nrem = 1
+            #
+            # self.createParameter("wetland_nrem", DOUBLE)
+            # self.wetland_nrem = 1
 
             self.__years = []
             self.__discount_factor = []
@@ -151,11 +169,19 @@ class Heuristics(Module):
             self.parcel.addAttribute("pv_benefit", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("npv", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("random_nmr", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("service_life", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("discount_rate", Attribute.DOUBLE, WRITE)
 
+
+            self.council = ViewContainer("council", COMPONENT, READ)
+            self.council.addAttribute("const_cost_factor", Attribute.DOUBLE, READ)
+            self.council.addAttribute("maint_cost_factor", Attribute.DOUBLE, READ)
+            self.council.addAttribute("rf_factor", Attribute.DOUBLE, READ)
+            self.council.addAttribute("nrem", Attribute.DOUBLE, READ)
 
 
             #Compile views
-            views = []
+            views = [self.parcel, self.council]
             views.append(self.parcel)
 
             #Register ViewContainer to stream
@@ -247,6 +273,19 @@ class Heuristics(Module):
 
         def run(self):
             #Data Stream Manipulation
+
+
+            self.council.reset_reading()
+            for c in self.council:
+                const_cost_factor= c.GetFieldAsDouble("const_cost_factor")
+                maint_cost_factor= c.GetFieldAsDouble("maint_cost_factor")
+                nrem = c.GetFieldAsDouble("nrem")
+                rf_factor = c.GetFieldAsDouble("rf_factor")
+
+            self.council.finalise()
+
+
+
             self.parcel.reset_reading()
 
             # Dictionary with {block_id: percentage of eia in the catchment treated}
@@ -268,8 +307,6 @@ class Heuristics(Module):
                 block_id = p.GetFieldAsInteger("block_id")
                 roof_area = p.GetFieldAsDouble("roof_area")
 
-
-
                 area = p.GetFieldAsDouble("convertible_area")
                 # loss_aversion = p.GetFieldAsDouble("loss_aversion")
                 prob_rg = p.GetFieldAsDouble("prob_rg")
@@ -283,7 +320,7 @@ class Heuristics(Module):
                 full_budget -= self.__totalCost
 
                 # Estimate runoff for current year
-                runoff = self.__rainfall[year] * 0.9 * 0.20
+                runoff = self.__rainfall[year] * rf_factor * 0.9 * 0.20
 
 
                 # print 'Budget: ', str(full_budget), "Rule: ", str(decision_rule)
@@ -315,8 +352,8 @@ class Heuristics(Module):
                         # define the area
 
 
-                        cost = self.const_cost(technology, conArea, year)
-                        opex = self.maint_cost(technology, conArea, year)
+                        cost = self.const_cost(technology, conArea, year) * const_cost_factor
+                        opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
 
                         if cost <= full_budget:
                             # print 'cost is within budget'
@@ -330,7 +367,7 @@ class Heuristics(Module):
                             p.SetField("basin_eia_treated", eia_treated)
 
                             removal = self.__removalRate[technology]
-                            N_removed = self.n_removed(conArea,removal, runoff)
+                            N_removed = self.n_removed(conArea,removal, runoff) * nrem
                             b = self.benefit_fun(year, N_removed)
 
                             p.SetField("new_landuse", technology)
@@ -402,8 +439,8 @@ class Heuristics(Module):
                         conArea = round(conArea,2)
                         # percent_treated = conArea / requiredArea
 
-                        cost = self.const_cost(technology, conArea, year)
-                        opex = self.maint_cost(technology, conArea, year)
+                        cost = self.const_cost(technology, conArea, year) * const_cost_factor
+                        opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
 
                         if cost <= full_budget:
                             # print 'cost is within budget'
@@ -411,7 +448,7 @@ class Heuristics(Module):
 
                             # b = self.benefitdic[self.technologies[self.tech]]
                             removal = self.__removalRate[technology]
-                            N_removed = self.n_removed(conArea, removal, runoff)
+                            N_removed = self.n_removed(conArea, removal, runoff) * nrem
                             b = self.benefit_fun(year, N_removed)
 
                             p.SetField("new_landuse", technology)
@@ -512,7 +549,7 @@ class Heuristics(Module):
                                 pvc = self.pv_total_costs(year, i, dict_conv_area[i])
 
                                 removal = self.__removalRate[i]
-                                N_removed = self.n_removed(dict_conv_area[i], removal, runoff)
+                                N_removed = self.n_removed(dict_conv_area[i], removal, runoff) * nrem
                                 b = self.benefit_fun(year, N_removed)
                                 pvb = self.pv_benefit(b)
                                 benefits[i]= pvb-pvc
@@ -521,8 +558,8 @@ class Heuristics(Module):
                             conArea = dict_conv_area[technology]
                             # percent_treated = conArea / dict_required_area[technology]
 
-                            cost = self.const_cost(technology, conArea, year)
-                            opex = self.maint_cost(technology, conArea, year)
+                            cost = self.const_cost(technology, conArea, year) * const_cost_factor
+                            opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
 
                             if cost <= full_budget:
                                 # print 'cost is within budget'
@@ -530,7 +567,7 @@ class Heuristics(Module):
 
                                 # b = self.benefitdic[self.technologies[self.tech]]
                                 removal = self.__removalRate[technology]
-                                N_removed = self.n_removed(conArea, removal, runoff)
+                                N_removed = self.n_removed(conArea, removal, runoff) * nrem
                                 b = self.benefit_fun(year, N_removed)
 
                                 p.SetField("new_landuse", technology)
@@ -631,8 +668,8 @@ class Heuristics(Module):
                             conArea = dict_conv_area[technology]
                             # percent_treated = conArea / dict_required_area[technology]
 
-                            cost = self.const_cost(technology, conArea, year)
-                            opex = self.maint_cost(technology, conArea, year)
+                            cost = self.const_cost(technology, conArea, year) * const_cost_factor
+                            opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
 
                             if cost <= full_budget:
                                 # print 'cost is within budget'
@@ -640,7 +677,7 @@ class Heuristics(Module):
 
                                 # b = self.benefitdic[self.technologies[self.tech]]
                                 removal = self.__removalRate[technology]
-                                N_removed = self.n_removed(conArea, removal, runoff)
+                                N_removed = self.n_removed(conArea, removal, runoff) * nrem
                                 b = self.benefit_fun(year, N_removed)
 
                                 p.SetField("new_landuse", technology)
@@ -703,15 +740,15 @@ class Heuristics(Module):
 
                         percent_treated = conArea / requiredArea
 
-                        cost = self.const_cost(technology, conArea, year)
-                        opex = self.maint_cost(technology, conArea, year)
+                        cost = self.const_cost(technology, conArea, year) * const_cost_factor
+                        opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
 
                         # print 'cost is within budget'
                         # self.benefitdic = {'wetland':136*con_area, 'sedimentation':1341*con_area, 'raingarden': 10244*con_area}
 
                         # b = self.benefitdic[self.technologies[self.tech]]
                         removal = self.__removalRate[technology]
-                        N_removed = self.n_removed(conArea, removal, runoff)
+                        N_removed = self.n_removed(conArea, removal, runoff) * nrem
                         b = self.benefit_fun(year, N_removed)
 
                         p.SetField("new_landuse", technology)
@@ -742,6 +779,12 @@ class Heuristics(Module):
                             b) + ' budget: ', str(full_budget)
 
                         # full_budget -= cost
+
+                # p.SetField("cc_factor", self.const_cost_factor)
+                # p.SetField("maint_factor", self.maint_cost_factor)
+                p.SetField("discount_rate", self.discount_rate)
+                p.SetField("service_life", self.service_life)
+                # p.SetField("rf_factor", self.rf_factor)
 
 
             self.__totalCost = 0
