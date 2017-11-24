@@ -92,9 +92,9 @@ class Heuristics(Module):
                                                "PCRZ_Reserved Land",
                                                "PPRZ_Community Service Facilities or Other",
                                                "PPRZ_Unclassified Private Land"]}
-            self.__rainfall = {2000: 882.5, 2001: 758, 2002: 668.7, 2003: 822.6, 2004: 820, 2005: 800.9, 2006: 643.2,
-                               2007: 728, 2008: 608.2,  2009: 718.4,  2010: 1051.9, 2011: 1163.4, 2012: 907.2,
-                               2013: 878.2, 2014: 695.5, 2015: 628,  2016: 896.6}
+            # self.__rainfall = {2000: 882.5, 2001: 758, 2002: 668.7, 2003: 822.6, 2004: 820, 2005: 800.9, 2006: 643.2,
+            #                    2007: 728, 2008: 608.2,  2009: 718.4,  2010: 1051.9, 2011: 1163.4, 2012: 907.2,
+            #                    2013: 878.2, 2014: 695.5, 2015: 628,  2016: 896.6}
 
             self.__offset={2004: 800, 2005: 800, 2006: 6645, 2007: 6645, 2008: 6645, 2009: 6645, 2010: 6645,
                     2011: 6645, 2012: 6645, 2013: 6645, 2014: 6645,  2015: 6645, 2016: 6645}
@@ -146,11 +146,11 @@ class Heuristics(Module):
             self.parcel.addAttribute("cost", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("private_cost", Attribute.DOUBLE, WRITE)
             # self.parcel.addAttribute("avg_wtp_stream", Attribute.DOUBLE, READ)
-            self.parcel.addAttribute("decision_rule", Attribute.INT, READ)
+            # self.parcel.addAttribute("decision_rule", Attribute.INT, READ)
 
             # self.parcel.addAttribute("random", Attribute.DOUBLE, READ)
-            self.parcel.addAttribute("year", Attribute.INT, READ)
-            self.parcel.addAttribute("budget", Attribute.DOUBLE, READ)
+            # self.parcel.addAttribute("year", Attribute.INT, READ)
+            # self.parcel.addAttribute("budget", Attribute.DOUBLE, READ)
 
             self.parcel.addAttribute("released", Attribute.INT, READ)
 
@@ -169,8 +169,7 @@ class Heuristics(Module):
             self.parcel.addAttribute("pv_benefit", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("npv", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("random_nmr", Attribute.DOUBLE, WRITE)
-            self.parcel.addAttribute("service_life", Attribute.DOUBLE, WRITE)
-            self.parcel.addAttribute("discount_rate", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("rainfall", Attribute.DOUBLE, READ)
 
 
             self.council = ViewContainer("council", COMPONENT, READ)
@@ -178,6 +177,16 @@ class Heuristics(Module):
             self.council.addAttribute("maint_cost_factor", Attribute.DOUBLE, READ)
             self.council.addAttribute("rf_factor", Attribute.DOUBLE, READ)
             self.council.addAttribute("nrem", Attribute.DOUBLE, READ)
+            self.council.addAttribute("budget", Attribute.DOUBLE, READ)
+            self.council.addAttribute("year", Attribute.INT, READ)
+            self.council.addAttribute("decision_rule", Attribute.INT, READ)
+            self.council.addAttribute("service_life", Attribute.DOUBLE, WRITE)
+            self.council.addAttribute("discount_rate", Attribute.DOUBLE, WRITE)
+
+            # self.timeseries = ViewContainer("timeseries", COMPONENT, READ)
+            # self.timeseries.addAttribute("summed", Attribute.DOUBLE, READ)
+            # self.timeseries.addAttribute("type", Attribute.STRING, READ)
+            # self.timeseries.addAttribute("station_id", Attribute.INT, READ)
 
 
             #Compile views
@@ -281,9 +290,13 @@ class Heuristics(Module):
                 maint_cost_factor= c.GetFieldAsDouble("maint_cost_factor")
                 nrem = c.GetFieldAsDouble("nrem")
                 rf_factor = c.GetFieldAsDouble("rf_factor")
+                budget = c.GetFieldAsDouble("budget")
+                year = c.GetFieldAsInteger("year")
+                decision_rule = c.GetFieldAsInteger("decision_rule")
+                c.SetField("discount_rate", self.discount_rate)
+                c.SetField("service_life", self.service_life)
 
             self.council.finalise()
-
 
 
             self.parcel.reset_reading()
@@ -294,11 +307,11 @@ class Heuristics(Module):
             for p in self.parcel:
 
                 # Load full annual budget and all other values
-                full_budget = p.GetFieldAsDouble("budget")
+                # full_budget = p.GetFieldAsDouble("budget")
                 council = p.GetFieldAsString("council")
 
-                year = p.GetFieldAsInteger("year")
-                decision_rule = p.GetFieldAsInteger("decision_rule")
+                # year = p.GetFieldAsInteger("year")
+                # decision_rule = p.GetFieldAsInteger("decision_rule")
 
                 landuse = p.GetFieldAsString("original_landuse")
                 newlanduse = p.GetFieldAsString("new_landuse")
@@ -313,14 +326,16 @@ class Heuristics(Module):
                 prob_wl = p.GetFieldAsDouble("prob_wetland")
                 prob_pd = p.GetFieldAsDouble("prob_pond")
                 max_prob_technology = p.GetFieldAsString("max_prob_technology")
-
+                rainfall = p.GetFieldAsDouble("rainfall")
                 released = p.GetFieldAsInteger("released")
 
                 # Substract current cumulative costs from full budget
-                full_budget -= self.__totalCost
 
+                # full_budget  self.__totalCost
+                remaining_budget = budget - self.__totalCost
                 # Estimate runoff for current year
-                runoff = self.__rainfall[year] * rf_factor * 0.9 * 0.20
+                # runoff = self.__rainfall[year] * rf_factor * 0.9 * 0.20
+                runoff = rainfall * rf_factor * 0.9 * 0.20
 
 
                 # print 'Budget: ', str(full_budget), "Rule: ", str(decision_rule)
@@ -355,7 +370,7 @@ class Heuristics(Module):
                         cost = self.const_cost(technology, conArea, year) * const_cost_factor
                         opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
 
-                        if cost <= full_budget:
+                        if cost <= remaining_budget:
                             # print 'cost is within budget'
                             # self.benefitdic = {'wetland':136*con_area, 'sedimentation':1341*con_area, 'raingarden': 10244*con_area}
 
@@ -393,10 +408,10 @@ class Heuristics(Module):
 
                             print technology, 'PVB, PVC, NPV: ', str(pvb), str(pvc), str(npv)
                             print 'Council: ', council, 'Year: ' ,str(year), ' area: ' , str(area) ,'conArea: ' , str(conArea)
-                            print ' cost: ',str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(b)+' budget: ', str(full_budget)
+                            print ' cost: ',str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(b)+' budget: ', str(remaining_budget)
                             # print str(self.technologies[self.tech])
                             # print random_number
-                            full_budget -= cost
+                            # full_budget -= cost
                             # if a pracel in this block has had a wsud, add eia_treated to existing eia_treated,
                             # otherwise add the to the new eia_treated
                             if block_id in blocks:
@@ -404,7 +419,7 @@ class Heuristics(Module):
                             else:
                                 blocks[block_id] = eia_treated
 
-                            blocks[block_id] = eia_treated
+                            # blocks[block_id] = eia_treated
                         # else:
                         #     print "criteria not met"
 
@@ -424,8 +439,8 @@ class Heuristics(Module):
                     else:
                         requiredArea = self.__requiredSize[technology] * imperviousCatchment
 
-                    if self.inv_cost(technology, full_budget) < area and self.inv_cost(technology, full_budget) < requiredArea:
-                        conArea = self.inv_cost(technology, full_budget)
+                    if self.inv_cost(technology, remaining_budget) < area and self.inv_cost(technology, remaining_budget) < requiredArea:
+                        conArea = self.inv_cost(technology, remaining_budget)
                     elif requiredArea > area:
                         conArea = area
                     else:
@@ -442,7 +457,7 @@ class Heuristics(Module):
                         cost = self.const_cost(technology, conArea, year) * const_cost_factor
                         opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
 
-                        if cost <= full_budget:
+                        if cost <= remaining_budget:
                             # print 'cost is within budget'
                             # self.benefitdic = {'wetland':136*con_area, 'sedimentation':1341*con_area, 'raingarden': 10244*con_area}
 
@@ -463,7 +478,7 @@ class Heuristics(Module):
 
                             eia_treated = conArea / self.__requiredSize[technology]
                             percent_treated = eia_treated / imperviousCatchment
-                            blocks[block_id] = percent_treated
+                            # blocks[block_id] = percent_treated
 
                             p.SetField("basin_percent_treated", percent_treated)
                             p.SetField("basin_eia_treated", eia_treated)
@@ -482,10 +497,10 @@ class Heuristics(Module):
                             print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
                                 conArea)
                             print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(
-                                b) + ' budget: ', str(full_budget)
+                                b) + ' budget: ', str(remaining_budget)
                             # print str(self.technologies[self.tech])
                             # print random_number
-                            full_budget -= cost
+                            # full_budget -= cost
                             # if a pracel in this block has had a wsud, add eia_treated to existing eia_treated,
                             # otherwise add the to the new eia_treated
                             if block_id in blocks:
@@ -493,7 +508,7 @@ class Heuristics(Module):
                             else:
                                 blocks[block_id] = eia_treated
 
-                            blocks[block_id] = eia_treated
+                            # blocks[block_id] = eia_treated
 
                 if decision_rule == 3:
 
@@ -561,7 +576,7 @@ class Heuristics(Module):
                             cost = self.const_cost(technology, conArea, year) * const_cost_factor
                             opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
 
-                            if cost <= full_budget:
+                            if cost <= remaining_budget:
                                 # print 'cost is within budget'
                                 # self.benefitdic = {'wetland':136*con_area, 'sedimentation':1341*con_area, 'raingarden': 10244*con_area}
 
@@ -592,16 +607,16 @@ class Heuristics(Module):
 
                                 p.SetField("random_nmr", random_nmr)
 
-                                blocks[block_id] = percent_treated
+                                # blocks[block_id] = percent_treated
                                 self.__totalCost += cost
                                 self.__totalBenefit += b
                                 print technology, 'PVB, PVC, NPV: ', str(pvb), str(pvc), str(npv)
                                 print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
                                     conArea)
                                 print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(
-                                    b) + ' budget: ', str(full_budget)
+                                    b) + ' budget: ', str(remaining_budget)
 
-                                full_budget -= cost
+                                # full_budget -= cost
                                 # if a pracel in this block has had a wsud, add eia_treated to existing eia_treated,
                                 # otherwise add the to the new eia_treated
                                 if block_id in blocks:
@@ -609,7 +624,7 @@ class Heuristics(Module):
                                 else:
                                     blocks[block_id] = eia_treated
 
-                                blocks[block_id] = eia_treated
+                                # blocks[block_id] = eia_treated
 
                 if decision_rule == 4:
 
@@ -671,7 +686,7 @@ class Heuristics(Module):
                             cost = self.const_cost(technology, conArea, year) * const_cost_factor
                             opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
 
-                            if cost <= full_budget:
+                            if cost <= remaining_budget:
                                 # print 'cost is within budget'
                                 # self.benefitdic = {'wetland':136*con_area, 'sedimentation':1341*con_area, 'raingarden': 10244*con_area}
 
@@ -701,16 +716,16 @@ class Heuristics(Module):
                                 p.SetField("pv_benefit", pvb)
                                 p.SetField("npv", npv)
 
-                                blocks[block_id] = percent_treated
+                                # blocks[block_id] = percent_treated
                                 self.__totalCost += cost
                                 self.__totalBenefit += b
                                 print technology, 'PVB, PVC, NPV: ', str(pvb), str(pvc), str(npv)
                                 print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
                                     conArea)
                                 print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(
-                                    b) + ' budget: ', str(full_budget)
+                                    b) + ' budget: ', str(remaining_budget)
 
-                                full_budget -= cost
+                                # full_budget -= cost
                                 # if a pracel in this block has had a wsud, add eia_treated to existing eia_treated,
                                 # otherwise add the to the new eia_treated
                                 if block_id in blocks:
@@ -718,12 +733,13 @@ class Heuristics(Module):
                                 else:
                                     blocks[block_id] = eia_treated
 
-                                blocks[block_id] = eia_treated
+                                # blocks[block_id] = eia_treated
 
                 if decision_rule == 5:
                     # print 'year == released', year == released
                     # print 'type year: ', type(year), 'type released', type(released)
                     # print 'year: ', year,  'released: ', released
+
                     if year == released and roof_area > 0:
                         # print "entered second loop"
                         technology = "raingarden"
@@ -776,7 +792,7 @@ class Heuristics(Module):
                         print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
                             conArea)
                         print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost), ' benefit: ', str(
-                            b) + ' budget: ', str(full_budget)
+                            b) + ' budget: ', str(remaining_budget)
 
                         # full_budget -= cost
 
