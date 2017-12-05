@@ -37,8 +37,22 @@ class budget(Module):
                        'KINGSTON': 145000, 'GLEN EIRA': 0},
                 2014: {'MONASH': 355300, 'BAYSIDE': 104000, 'PORT PHILLIP': 485000, 'STONNINGTON': 120000,
                        'KINGSTON': 140000, 'GLEN EIRA': 100000}}
-            self.createParameter("rule", INT)
-            self.rule = 1
+
+            self.__dict_costs = {2005: {'KINGSTON':  20000},
+                                 2006: {'KINGSTON': 123000},
+                                 2007: {'KINGSTON': 647684},
+                                 2008: {'KINGSTON': 70000},
+                                 2009: {'KINGSTON': 210000},
+                                 2010: {'KINGSTON': 0},
+                                 2011: {'KINGSTON': 0},
+                                 2012: {'KINGSTON': 130000}}
+
+
+            self.createParameter("source", STRING)
+            self.source = "budget"
+
+            self.createParameter("amount", DOUBLE)
+            self.amount = 0
 
             self.council = ViewContainer("council", COMPONENT, READ)
 
@@ -63,11 +77,17 @@ class budget(Module):
             #Data Stream Manipulation
             self.council.reset_reading()
 
-
             for c in self.council:
                 year = c.GetFieldAsInteger("year")
                 council_name = c.GetFieldAsString("lga_name")
-                #print year, type(year), council, type(council)
-                c.SetField("budget", self.__dict[year][council_name])
+                if self.source == "budget":
+                    #print year, type(year), council, type(council)
+                    c.SetField("budget", self.__dict[year][council_name])
+                elif self.source == "costs":
+                    c.SetField("budget", self.__dict_costs[year][council_name])
+                elif self.source == "scenario":
+                    c.SetField("budget", self.amount)
+                else:
+                    print "***Source chosen not in choices***"
 
             self.council.finalise()
