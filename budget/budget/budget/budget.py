@@ -47,6 +47,15 @@ class budget(Module):
                                  2011: {'KINGSTON': 0},
                                  2012: {'KINGSTON': 130000}}
 
+            self.__dict_pvcosts = {2005: {'KINGSTON':  34113},
+                                 2006: {'KINGSTON': 151164},
+                                 2007: {'KINGSTON': 748486},
+                                 2008: {'KINGSTON': 92064},
+                                 2009: {'KINGSTON': 251926},
+                                 2010: {'KINGSTON': 0},
+                                 2011: {'KINGSTON': 0},
+                                 2012: {'KINGSTON': 182791}}
+
 
             self.createParameter("source", STRING)
             self.source = "budget"
@@ -85,6 +94,8 @@ class budget(Module):
                     c.SetField("budget", self.__dict[year][council_name])
                 elif self.source == "costs":
                     c.SetField("budget", self.__dict_costs[year][council_name])
+                elif self.source == "pvcosts":
+                    c.SetField("budget", self.__dict_pvcosts[year][council_name])
                 elif self.source == "scenario":
                     c.SetField("budget", self.amount)
                 else:
