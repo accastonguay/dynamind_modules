@@ -47,18 +47,29 @@ class budget(Module):
                                  2011: {'KINGSTON': 0},
                                  2012: {'KINGSTON': 130000}}
 
-            self.__dict_pvcosts = {2005: {'KINGSTON':  34113},
-                                 2006: {'KINGSTON': 151164},
-                                 2007: {'KINGSTON': 748486},
-                                 2008: {'KINGSTON': 92064},
-                                 2009: {'KINGSTON': 251926},
-                                 2010: {'KINGSTON': 0},
-                                 2011: {'KINGSTON': 0},
-                                 2012: {'KINGSTON': 182791}}
+            """Pv costs from Parson Brickerhoff"""
+            # self.__dict_pvcosts = {2005: {'KINGSTON':  34113},
+            #                      2006: {'KINGSTON': 151164},
+            #                      2007: {'KINGSTON': 748486},
+            #                      2008: {'KINGSTON': 92064},
+            #                      2009: {'KINGSTON': 251926},
+            #                      2010: {'KINGSTON': 0},
+            #                      2011: {'KINGSTON': 0},
+            #                      2012: {'KINGSTON': 182791}}
 
+            """Pv costs from ewater"""
 
-            self.createParameter("source", STRING)
-            self.source = "budget"
+            self.__dict_pvcosts = {2005: {'KINGSTON': 50751.42883533268},
+                                   2006: {'KINGSTON': 97300.06141108162},
+                                   2007: {'KINGSTON': 410233.28178161825},
+                                   2008: {'KINGSTON': 77844.36137145657},
+                                   2009: {'KINGSTON': 146530.1345269238},
+                                   2010: {'KINGSTON': 0.38454001443866503},
+                                   2011: {'KINGSTON': 0.39934952172118804},
+                                   2012: {'KINGSTON': 186431.65982646588}}
+
+            # self.createParameter("source", STRING)
+            # self.source = "budget"
 
             self.createParameter("amount", DOUBLE)
             self.amount = 0
@@ -68,6 +79,7 @@ class budget(Module):
             self.council.addAttribute("year", Attribute.INT, READ)
             self.council.addAttribute("lga_name", Attribute.STRING, READ)
             self.council.addAttribute("budget", Attribute.DOUBLE, WRITE)
+            self.council.addAttribute("budget_source", Attribute.STRING, READ)
 
             #Compile views
             views = []
@@ -89,14 +101,16 @@ class budget(Module):
             for c in self.council:
                 year = c.GetFieldAsInteger("year")
                 council_name = c.GetFieldAsString("lga_name")
-                if self.source == "budget":
+                source = c.GetFieldAsString("budget_source")
+
+                if source == "budget":
                     #print year, type(year), council, type(council)
                     c.SetField("budget", self.__dict[year][council_name])
-                elif self.source == "costs":
+                elif source == "costs":
                     c.SetField("budget", self.__dict_costs[year][council_name])
-                elif self.source == "pvcosts":
+                elif source == "pvcosts":
                     c.SetField("budget", self.__dict_pvcosts[year][council_name])
-                elif self.source == "scenario":
+                elif source == "scenario":
                     c.SetField("budget", self.amount)
                 else:
                     print "***Source chosen not in choices***"

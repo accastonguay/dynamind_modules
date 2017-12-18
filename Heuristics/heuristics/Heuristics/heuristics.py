@@ -17,8 +17,12 @@ class Heuristics(Module):
             #To use the GDAL API
             self.setIsGDALModule(True)
 
-            self.createParameter("service_life", DOUBLE)
-            self.service_life = 50
+            self.createParameter("lifespan_rg", DOUBLE)
+            self.lifespan_rg = 37
+            self.createParameter("lifespan_wetland", DOUBLE)
+            self.lifespan_wetland = 40
+            self.createParameter("lifespan_pond", DOUBLE)
+            self.lifespan_pond = 50
 
             self.createParameter("discount_rate", DOUBLE)
             self.discount_rate = 0.06
@@ -29,21 +33,39 @@ class Heuristics(Module):
             self.createParameter("offset_source", STRING)
             self.offset_source = "observed"
 
-            self.createParameter("budget_source", STRING)
-            self.budget_source = "cost"
-
             self.createParameter("offset_scenario", DOUBLE)
             self.offset_scenario = 0
 
-            self.__years = []
-            self.__discount_factor = []
+            self.__years = {'raingarden' : [], 'wetland' : [], 'pond': []}
+            self.__discount_factor = {'raingarden' : [], 'wetland' : [], 'pond': []}
 
-            for y in xrange(1, int(self.service_life) + 1, 1):
-                self.__years.append(y)
-                self.__discount_factor.append(1. / (1. + self.discount_rate) ** (y - 1))
+            self.__lifespans = {'wetland': self.lifespan_wetland, 'raingarden': self.lifespan_rg, 'pond': self.lifespan_pond}
 
-            self.__cpi = {2005: 73.425, 2006: 77.325, 2007: 80.175, 2008: 85.55,
-                          2009: 88.65, 2010: 90.875, 2011: 97.325, 2012: 102.25}
+            self.__decomissioning = {'wetland': 0.42, 'raingarden': 0.39, 'pond': 0.38}
+            self.__annualised_renewal = {'wetland': 0.0052, 'raingarden': 0.02, 'pond': 0.014}
+
+            for t in self.__lifespans:
+                for y in range(1, int(self.__lifespans[t]) + 1, 1):
+                    self.__years[t].append(y)
+                    self.__discount_factor[t].append(1. / (1. + self.discount_rate) ** (y - 1))
+
+            # for y in xrange(1, int(self.lifespan_rg) + 1, 1):
+            #     self.__years['raingarden'].append(y)
+            #     self.__discount_factor.append(1. / (1. + self.discount_rate) ** (y - 1))
+
+            '''Producer price index Victoria, roads & bridges, Table 17, index 3101'''
+            # self.__cpi = {2005: 73.425, 2006: 77.325, 2007: 80.175, 2008: 85.55,
+            #               2009: 88.65, 2010: 90.875, 2011: 97.325, 2012: 102.25}
+
+            '''Index Numbers ;  All groups CPI ;  Melbourne'''
+
+            # self.__cpi = {2004: 81.5, 2005: 83.475, 2006: 86.175, 2007: 88.225, 2008: 91.925, 2009: 93.225, 2010: 96.05,
+            #        2011: 99.35, 2012: 100.975, 2013: 103.45}
+
+            '''Index Numbers ;  Non-tradables ;  Melbourne'''
+
+            self.__cpi = {2004: 77, 2005: 79.425, 2006: 81.675, 2007: 84.5, 2008: 88.95, 2009: 90.9, 2010: 94.775, 2011: 98.425,
+             2012: 101.85}
 
             self.__suitable_zoneLu = {"wetland": ["GRZ1_Unclassified Private Land", "GRZ2_Unclassified Private Land",
                                                   "PCRZ_Nature Reserve", "PCRZ_Unclassified Private Land",
@@ -115,6 +137,11 @@ class Heuristics(Module):
                                   "raingarden": 5}
 
 
+            self.__lifespan = {"wetland": 40,
+                                  "pond": 50,
+                                  "raingarden": 37}
+
+
 
             self.parcel = ViewContainer("parcel", COMPONENT, READ)
             self.parcel.addAttribute("original_landuse", Attribute.STRING, READ)
@@ -163,7 +190,7 @@ class Heuristics(Module):
             self.council = ViewContainer("council", COMPONENT, READ)
             self.council.addAttribute("const_cost_factor", Attribute.DOUBLE, READ)
             self.council.addAttribute("maint_cost_factor", Attribute.DOUBLE, READ)
-            # self.council.addAttribute("runoff_factor", Attribute.DOUBLE, READ)
+            self.council.addAttribute("budget_source", Attribute.STRING, READ)
             self.council.addAttribute("budget_factor", Attribute.DOUBLE, READ)
             self.council.addAttribute("rf_factor", Attribute.DOUBLE, READ)
             self.council.addAttribute("nrem", Attribute.DOUBLE, READ)
@@ -175,10 +202,12 @@ class Heuristics(Module):
             self.council.addAttribute("expected_removal", Attribute.DOUBLE, WRITE)
             self.council.addAttribute("offset_source", Attribute.STRING, WRITE)
             self.council.addAttribute("offset_scenario", Attribute.DOUBLE, WRITE)
+            self.council.addAttribute("lifespan_rg", Attribute.DOUBLE, WRITE)
+            self.council.addAttribute("lifespan_wetland", Attribute.DOUBLE, WRITE)
+            self.council.addAttribute("lifespan_pond", Attribute.DOUBLE, WRITE)
 
             #Compile views
             views = [self.parcel, self.council]
-            views.append(self.parcel)
 
             #Register ViewContainer to stream
             self.registerViewContainers(views)
@@ -188,14 +217,28 @@ class Heuristics(Module):
         Data Manipulation Process (DMP)
         """
 
+        ############ Costs assessment ############
+        '''Costs from Parson Brickerhoff, 2013'''
+        # def const_cost(self, technology, area, year):
+        #     if technology == 'wetland':
+        #         cost = 1911 * area ** 0.6435
+        #     elif technology == 'raingarden':
+        #         cost = (area * 6023.1 * area ** -0.46)
+        #     elif technology == 'pond':
+        #         cost = 685.1 * area ** 0.7893
+        #     return cost* self.__cpi[year] / self.__cpi[2012]
+
+        '''Costs from Music manual, 2013'''
+
         def const_cost(self, technology, area, year):
             if technology == 'wetland':
                 cost = 1911 * area ** 0.6435
             elif technology == 'raingarden':
-                cost = (area * 6023.1 * area ** -0.46)
+                cost = 387.4 * area ** 0.7673
+                # cost = (area * 6023.1 * area ** -0.46)
             elif technology == 'pond':
                 cost = 685.1 * area ** 0.7893
-            return cost* self.__cpi[year] / self.__cpi[2012]
+            return cost* self.__cpi[year] / self.__cpi[2004]
 
         def inv_cost(self, technology, budget):
             if technology == 'wetland':
@@ -206,30 +249,73 @@ class Heuristics(Module):
                 area = 0.00025546 * (budget ** 1.266945394653)
             return area
 
+        '''Maintenance costs from Parson Brickerhoff, 2013'''
+        # def maint_cost(self, technology, area, year):
+        #     if technology == 'wetland':
+        #         cost = area * 1289.7 * area ** -0.794
+        #     elif technology == 'raingarden':
+        #         cost = area * 199.19 * area ** -0.551
+        #     elif technology == 'pond':
+        #         # cost = 185.4 * area ** 0.4780
+        #         if area < 250:
+        #             cost = 18 * area
+        #         elif 250 <= area < 500:
+        #             cost = 12 * area
+        #         elif 500 <= area < 1500:
+        #             cost = 5 * area
+        #         elif 1500 <= area:
+        #             cost = 2 * area
+        #     mcost = cost* self.__cpi[year] / self.__cpi[2004]
+        #     renewal = self.__annualised_renewal[technology] * self.__cpi[year] / self.__cpi[2004]
+        #     maintenance_cost = []
+        #     renewal_cost = []
+        #     for y in self.__years[technology]:
+        #         maintenance_cost.append(mcost)
+        #         renewal_cost.append(renewal)
+        #     discount_maintenance_cost = [(d * m) + (d*r) for d, m, r in zip(self.__discount_factor[technology], maintenance_cost,renewal_cost)]
+        #     return sum(discount_maintenance_cost)
+
+        '''Maintenance costs from Music manual, 2013'''
+
         def maint_cost(self, technology, area, year):
             if technology == 'wetland':
-                cost = area * 1289.7 * area ** -0.794
+                cost = 6.831 * area **0.8634
             elif technology == 'raingarden':
-                cost = area * 199.19 * area ** -0.551
+                cost = 48.87*self.const_cost(technology, area, year)**0.4410
             elif technology == 'pond':
-                if area < 250:
-                    cost = 18 * area
-                elif 250 <= area < 500:
-                    cost = 12 * area
-                elif 500 <= area < 1500:
-                    cost = 5 * area
-                elif 1500 <= area:
-                    cost = 2 * area
-
-            mcost = cost* self.__cpi[year] / self.__cpi[2012]
-
+                cost = 185.4 * area ** 0.4780
+            mcost = cost* self.__cpi[year] / self.__cpi[2004]
+            renewal = self.__annualised_renewal[technology] * self.__cpi[year] / self.__cpi[2004]
             maintenance_cost = []
-            for y in self.__years:
+            renewal_cost = []
+            for y in self.__years[technology]:
                 maintenance_cost.append(mcost)
-
-            discount_maintenance_cost = [(d * m) for d, m in zip(self.__discount_factor, maintenance_cost)]
-
+                renewal_cost.append(renewal)
+            discount_maintenance_cost = [(d * m) + (d*r) for d, m, r in zip(self.__discount_factor[technology], maintenance_cost,renewal_cost)]
             return sum(discount_maintenance_cost)
+
+        """ Total PV costs function for Parson Brickerhoff"""
+        # def pv_total_costs(self, year, technology, area):
+        #     reset = 75 * area * 1. / (1. + self.discount_rate) ** (12.5)
+        #     try:
+        #         if technology in ['wetland', 'pond']:
+        #             return self.const_cost(technology, area, year) + self.maint_cost(technology, area,year)
+        #         elif technology == 'raingarden':
+        #             return self.const_cost(technology, area, year) + self.maint_cost(technology, area,year)+reset
+        #     except (LookupError):
+        #         raise ValueError("can't calculate total costs")
+
+        """Function for Music"""
+        def pv_total_costs(self, year, technology, area):
+            decomissioning_cost = (self.const_cost(technology, area, year)*self.__decomissioning[technology])
+            disc_decom_cost = decomissioning_cost* 1. / (1. + self.discount_rate) ** (self.__lifespans[technology])
+
+            try:
+                return self.const_cost(technology, area, year) + self.maint_cost(technology, area,year)+disc_decom_cost
+            except (LookupError):
+                raise ValueError("can't calculate total costs")
+
+        ########## Benefit assessment #############
 
         def n_removed(self, area, runoff):
             n = runoff * 0.0021 * area
@@ -239,21 +325,11 @@ class Heuristics(Module):
             b = rate * n_removed
             return b
 
-        def pv_total_costs(self, year, technology, area):
-            reset = 75 * area * 1. / (1. + self.discount_rate) ** (12.5)
-            try:
-                if technology in ['wetland', 'pond']:
-                    return self.const_cost(technology, area, year) + self.maint_cost(technology, area,year)
-                elif technology == 'raingarden':
-                    return self.const_cost(technology, area, year) + self.maint_cost(technology, area,year)+reset
-            except (LookupError):
-                raise ValueError("can't calculate total costs")
-
-        def pv_benefit(self, b):
+        def pv_benefit(self, b, technology):
             benefit_list = []
             for y in self.__years:
                 benefit_list.append(b)
-            discount_n_removal = [(d * b) for d, b in zip(self.__discount_factor, benefit_list)]
+            discount_n_removal = [(d * b) for d, b in zip(self.__discount_factor[technology], benefit_list)]
 
             return sum(discount_n_removal)
 
@@ -287,8 +363,8 @@ class Heuristics(Module):
             for c in self.council:
                 const_cost_factor= c.GetFieldAsDouble("const_cost_factor")
                 maint_cost_factor= c.GetFieldAsDouble("maint_cost_factor")
-                # runoff_factor= c.GetFieldAsDouble("runoff_factor")
                 budget_factor= c.GetFieldAsDouble("budget_factor")
+                budget_source = c.GetFieldAsString("budget_source")
 
                 # nrem = c.GetFieldAsDouble("nrem")
                 rf_factor = c.GetFieldAsDouble("rf_factor")
@@ -301,6 +377,11 @@ class Heuristics(Module):
                 c.SetField("expected_removal", self.expected_removal)
                 c.SetField("offset_source", self.offset_source)
                 c.SetField("offset_scenario", self.offset_scenario)
+
+                c.SetField("lifespan_rg", self.lifespan_rg)
+                c.SetField("lifespan_wetland", self.lifespan_wetland)
+                c.SetField("lifespan_pond", self.lifespan_pond)
+
 
                 budget = budget*budget_factor
 
@@ -404,10 +485,10 @@ class Heuristics(Module):
                             p.SetField("conv_area", conArea)
 
                             pvc = self.pv_total_costs(year, technology, conArea)
-                            pvb = self.pv_benefit(b)
+                            pvb = self.pv_benefit(b, technology)
                             npv = pvb - pvc
 
-                            if self.budget_source == "pvcost":
+                            if budget_source == "pvcosts":
                                 self.__totalCost += pvc
                             else:
                                 self.__totalCost += cost
@@ -439,7 +520,7 @@ class Heuristics(Module):
 
 
                 ### Strategy 2: Whole budget is spent on most likely parcel
-                if decision_rule == 2 and released < 2000:
+                if decision_rule == 2 and released < 2000 and remaining_budget > 0:
 
                     technology = max_prob_technology
 
@@ -498,14 +579,14 @@ class Heuristics(Module):
                             p.SetField("basin_eia_treated", eia_treated)
 
                             pvc = self.pv_total_costs(year, technology, conArea)
-                            pvb = self.pv_benefit(b)
+                            pvb = self.pv_benefit(b, technology)
                             npv = pvb - pvc
 
                             p.SetField("pv_cost", pvc)
                             p.SetField("pv_benefit", pvb)
                             p.SetField("npv", npv)
 
-                            if self.budget_source == "pvcost":
+                            if budget_source == "pvcosts":
                                 self.__totalCost += pvc
                             else:
                                 self.__totalCost += cost
@@ -584,7 +665,7 @@ class Heuristics(Module):
                                 # removal = self.__removalRate[i]
                                 N_removed = self.n_removed(dict_conv_area[i]/self.design_curves(self.expected_removal, i), runoff)
                                 b = self.benefit_fun(offset_rate, N_removed)
-                                pvb = self.pv_benefit(b)
+                                pvb = self.pv_benefit(b, i)
                                 benefits[i]= pvb-pvc
                             technology = max(benefits)
                         # Otherwise select the only option available
@@ -627,7 +708,7 @@ class Heuristics(Module):
                                 p.SetField("random_nmr", random_nmr)
 
                                 # blocks[block_id] = percent_treated
-                                if self.budget_source == "pvcost":
+                                if budget_source == "pvcosts":
                                     self.__totalCost += pvc
                                 else:
                                     self.__totalCost += cost
@@ -732,7 +813,7 @@ class Heuristics(Module):
                                 p.SetField("basin_percent_treated", percent_treated)
                                 p.SetField("basin_eia_treated", eia_treated)
 
-                                pvb = self.pv_benefit(b)
+                                pvb = self.pv_benefit(b, technology)
                                 npv = pvb - pvc
 
                                 p.SetField("pv_cost", pvc)
@@ -740,7 +821,7 @@ class Heuristics(Module):
                                 p.SetField("npv", npv)
 
                                 # blocks[block_id] = percent_treated
-                                if self.budget_source == "pvcost":
+                                if budget_source == "pvcosts":
                                     self.__totalCost += pvc
                                 else:
                                     self.__totalCost += cost
@@ -805,7 +886,7 @@ class Heuristics(Module):
                 #         p.SetField("percent_treated", percent_treated)
                 #         pvc = self.pv_total_costs(year, technology, conArea)
                 #
-                #         pvb = self.pv_benefit(b)
+                #         pvb = self.pv_benefit(b, technology)
                 #         npv = pvb - pvc
                 #
                 #         p.SetField("pv_cost", pvc)
