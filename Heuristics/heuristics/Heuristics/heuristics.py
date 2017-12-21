@@ -33,6 +33,9 @@ class Heuristics(Module):
             self.createParameter("offset_source", STRING)
             self.offset_source = "observed"
 
+            self.createParameter("budget_source", STRING)
+            self.budget_source = "costs"
+
             self.createParameter("offset_scenario", DOUBLE)
             self.offset_scenario = 0
 
@@ -112,6 +115,47 @@ class Heuristics(Module):
 
             self.__totalCost = 0
             self.__totalBenefit = 0
+
+            ######## Budget ##########
+            self.__dict_budget = {
+                2005: 50000,
+                2006:  50000,
+                2007:  50000,
+                2008:  50000,
+                2009:  160000,
+                2010: 106000,
+                2011: 150000,
+                2012: 246000}
+
+            self.__dict_costs = {2005: 20000,
+                                 2006: 123000,
+                                 2007: 647684,
+                                 2008: 70000,
+                                 2009: 210000,
+                                 2010: 0,
+                                 2011: 0,
+                                 2012: 130000}
+
+            """Pv costs from Parson Brickerhoff"""
+            # self.__dict_pvcosts = {2005: {'KINGSTON':  34113},
+            #                      2006: {'KINGSTON': 151164},
+            #                      2007: {'KINGSTON': 748486},
+            #                      2008: {'KINGSTON': 92064},
+            #                      2009: {'KINGSTON': 251926},
+            #                      2010: {'KINGSTON': 0},
+            #                      2011: {'KINGSTON': 0},
+            #                      2012: {'KINGSTON': 182791}}
+
+            """Pv costs from ewater"""
+
+            self.__dict_pvcosts = {2005: 50751.42883533268,
+                                   2006: 97300.06141108162,
+                                   2007: 410233.28178161825,
+                                   2008: 77844.36137145657,
+                                   2009: 146530.1345269238,
+                                   2010: 0,
+                                   2011: 0,
+                                   2012: 186431.65982646588}
 
             # self.__removalRate = {'wetland': 0.61, 'pond': 0.32, 'raingarden': 0.65}
             # self.__adjustmentFactor = {'wetland': 1.2, 'pond': 1.6, 'raingarden': 1.1}
@@ -194,10 +238,9 @@ class Heuristics(Module):
             self.council.addAttribute("budget_factor", Attribute.DOUBLE, READ)
             self.council.addAttribute("rf_factor", Attribute.DOUBLE, READ)
             self.council.addAttribute("nrem", Attribute.DOUBLE, READ)
-            self.council.addAttribute("budget", Attribute.DOUBLE, READ)
+            # self.council.addAttribute("budget", Attribute.DOUBLE, READ)
             self.council.addAttribute("year", Attribute.INT, READ)
             self.council.addAttribute("decision_rule", Attribute.INT, READ)
-            self.council.addAttribute("service_life", Attribute.DOUBLE, WRITE)
             self.council.addAttribute("discount_rate", Attribute.DOUBLE, WRITE)
             self.council.addAttribute("expected_removal", Attribute.DOUBLE, WRITE)
             self.council.addAttribute("offset_source", Attribute.STRING, WRITE)
@@ -205,6 +248,10 @@ class Heuristics(Module):
             self.council.addAttribute("lifespan_rg", Attribute.DOUBLE, WRITE)
             self.council.addAttribute("lifespan_wetland", Attribute.DOUBLE, WRITE)
             self.council.addAttribute("lifespan_pond", Attribute.DOUBLE, WRITE)
+            self.council.addAttribute("budget", Attribute.DOUBLE, WRITE)
+            self.council.addAttribute("budget_source", Attribute.STRING, WRITE)
+
+
 
             #Compile views
             views = [self.parcel, self.council]
@@ -361,22 +408,38 @@ class Heuristics(Module):
 
             self.council.reset_reading()
             for c in self.council:
+                decision_rule = c.GetFieldAsInteger("decision_rule")
                 const_cost_factor= c.GetFieldAsDouble("const_cost_factor")
                 maint_cost_factor= c.GetFieldAsDouble("maint_cost_factor")
                 budget_factor= c.GetFieldAsDouble("budget_factor")
-                budget_source = c.GetFieldAsString("budget_source")
-
-                # nrem = c.GetFieldAsDouble("nrem")
+                # budget_source = c.GetFieldAsString("budget_source")
                 rf_factor = c.GetFieldAsDouble("rf_factor")
-                budget = c.GetFieldAsDouble("budget")
-
+                # budget = c.GetFieldAsDouble("budget")
                 year = c.GetFieldAsInteger("year")
-                decision_rule = c.GetFieldAsInteger("decision_rule")
+
+
+                # council_name = c.GetFieldAsString("lga_name")
+
+                if self.budget_source == "budget":
+                    # print year, type(year), council, type(council)
+                    budget = self.__dict_budget[year]
+                    c.SetField("budget", budget)
+                elif self.budget_source == "costs":
+                    budget = self.__dict_costs[year]
+                    c.SetField("budget", budget)
+                elif self.budget_source == "pvcosts":
+                    budget = self.__dict_pvcosts[year]
+                    c.SetField("budget", budget)
+                # elif budget_source == "scenario":
+                #     c.SetField("budget", self.amount)
+                else:
+                    print "***Source chosen not in choices***"
+
                 c.SetField("discount_rate", self.discount_rate)
-                c.SetField("service_life", self.service_life)
                 c.SetField("expected_removal", self.expected_removal)
                 c.SetField("offset_source", self.offset_source)
                 c.SetField("offset_scenario", self.offset_scenario)
+                c.SetField("budget_source", self.budget_source)
 
                 c.SetField("lifespan_rg", self.lifespan_rg)
                 c.SetField("lifespan_wetland", self.lifespan_wetland)
@@ -488,7 +551,7 @@ class Heuristics(Module):
                             pvb = self.pv_benefit(b, technology)
                             npv = pvb - pvc
 
-                            if budget_source == "pvcosts":
+                            if self.budget_source == "pvcosts":
                                 self.__totalCost += pvc
                             else:
                                 self.__totalCost += cost
@@ -586,7 +649,7 @@ class Heuristics(Module):
                             p.SetField("pv_benefit", pvb)
                             p.SetField("npv", npv)
 
-                            if budget_source == "pvcosts":
+                            if self.budget_source == "pvcosts":
                                 self.__totalCost += pvc
                             else:
                                 self.__totalCost += cost
@@ -708,7 +771,7 @@ class Heuristics(Module):
                                 p.SetField("random_nmr", random_nmr)
 
                                 # blocks[block_id] = percent_treated
-                                if budget_source == "pvcosts":
+                                if self.budget_source == "pvcosts":
                                     self.__totalCost += pvc
                                 else:
                                     self.__totalCost += cost
@@ -821,7 +884,7 @@ class Heuristics(Module):
                                 p.SetField("npv", npv)
 
                                 # blocks[block_id] = percent_treated
-                                if budget_source == "pvcosts":
+                                if self.budget_source == "pvcosts":
                                     self.__totalCost += pvc
                                 else:
                                     self.__totalCost += cost
