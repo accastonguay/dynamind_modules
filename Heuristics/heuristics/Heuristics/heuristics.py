@@ -19,8 +19,10 @@ class Heuristics(Module):
 
             self.createParameter("lifespan_rg", DOUBLE)
             self.lifespan_rg = 37
+
             self.createParameter("lifespan_wetland", DOUBLE)
             self.lifespan_wetland = 40
+
             self.createParameter("lifespan_pond", DOUBLE)
             self.lifespan_pond = 50
 
@@ -35,6 +37,9 @@ class Heuristics(Module):
 
             self.createParameter("budget_source", STRING)
             self.budget_source = "costs"
+
+            self.createParameter("cost_source", STRING)
+            self.cost_source = "melbourne_water"
 
             self.createParameter("offset_scenario", DOUBLE)
             self.offset_scenario = 0
@@ -250,6 +255,7 @@ class Heuristics(Module):
             self.council.addAttribute("lifespan_pond", Attribute.DOUBLE, WRITE)
             self.council.addAttribute("budget", Attribute.DOUBLE, WRITE)
             self.council.addAttribute("budget_source", Attribute.STRING, WRITE)
+            self.council.addAttribute("cost_source", Attribute.STRING, WRITE)
 
 
 
@@ -264,28 +270,29 @@ class Heuristics(Module):
         Data Manipulation Process (DMP)
         """
 
-        ############ Costs assessment ############
-        '''Costs from Parson Brickerhoff, 2013'''
-        # def const_cost(self, technology, area, year):
-        #     if technology == 'wetland':
-        #         cost = 1911 * area ** 0.6435
-        #     elif technology == 'raingarden':
-        #         cost = (area * 6023.1 * area ** -0.46)
-        #     elif technology == 'pond':
-        #         cost = 685.1 * area ** 0.7893
-        #     return cost* self.__cpi[year] / self.__cpi[2012]
+        ''' Costs assessment '''
 
-        '''Costs from Music manual, 2013'''
+        def const_cost(self, technology, area, year, source):
+            ### Costs from Parson Brickerhoff, 2013 ###
+            if source == "melbourne_water":
+                if technology == 'wetland':
+                    cost = 1911 * area ** 0.6435
+                elif technology == 'raingarden':
+                    cost = (area * 6023.1 * area ** -0.46)
+                elif technology == 'pond':
+                    cost = 685.1 * area ** 0.7893
+                return cost* self.__cpi[year] / self.__cpi[2012]
 
-        def const_cost(self, technology, area, year):
-            if technology == 'wetland':
-                cost = 1911 * area ** 0.6435
-            elif technology == 'raingarden':
-                cost = 387.4 * area ** 0.7673
-                # cost = (area * 6023.1 * area ** -0.46)
-            elif technology == 'pond':
-                cost = 685.1 * area ** 0.7893
-            return cost* self.__cpi[year] / self.__cpi[2004]
+            ### Costs from Music manual, 2013 ###
+            elif source == "music":
+                if technology == 'wetland':
+                    cost = 1911 * area ** 0.6435
+                elif technology == 'raingarden':
+                    cost = 387.4 * area ** 0.7673
+                    # cost = (area * 6023.1 * area ** -0.46)
+                elif technology == 'pond':
+                    cost = 685.1 * area ** 0.7893
+                return cost* self.__cpi[year] / self.__cpi[2004]
 
         def inv_cost(self, technology, budget):
             if technology == 'wetland':
@@ -296,50 +303,50 @@ class Heuristics(Module):
                 area = 0.00025546 * (budget ** 1.266945394653)
             return area
 
-        '''Maintenance costs from Parson Brickerhoff, 2013'''
-        # def maint_cost(self, technology, area, year):
-        #     if technology == 'wetland':
-        #         cost = area * 1289.7 * area ** -0.794
-        #     elif technology == 'raingarden':
-        #         cost = area * 199.19 * area ** -0.551
-        #     elif technology == 'pond':
-        #         # cost = 185.4 * area ** 0.4780
-        #         if area < 250:
-        #             cost = 18 * area
-        #         elif 250 <= area < 500:
-        #             cost = 12 * area
-        #         elif 500 <= area < 1500:
-        #             cost = 5 * area
-        #         elif 1500 <= area:
-        #             cost = 2 * area
-        #     mcost = cost* self.__cpi[year] / self.__cpi[2004]
-        #     renewal = self.__annualised_renewal[technology] * self.__cpi[year] / self.__cpi[2004]
-        #     maintenance_cost = []
-        #     renewal_cost = []
-        #     for y in self.__years[technology]:
-        #         maintenance_cost.append(mcost)
-        #         renewal_cost.append(renewal)
-        #     discount_maintenance_cost = [(d * m) + (d*r) for d, m, r in zip(self.__discount_factor[technology], maintenance_cost,renewal_cost)]
-        #     return sum(discount_maintenance_cost)
+        def maint_cost(self, technology, area, year, source):
+            ### Maintenance costs from Parson Brickerhoff, 2013 ###
+            if source == "melbourne_water":
+                if technology == 'wetland':
+                    cost = area * 1289.7 * area ** -0.794
+                elif technology == 'raingarden':
+                    cost = area * 199.19 * area ** -0.551
+                elif technology == 'pond':
+                    cost = 185.4 * area ** 0.4780
+                    # if area < 250:
+                    #     cost = 18 * area
+                    # elif 250 <= area < 500:
+                    #     cost = 12 * area
+                    # elif 500 <= area < 1500:
+                    #     cost = 5 * area
+                    # elif 1500 <= area:
+                    #     cost = 2 * area
+                mcost = cost* self.__cpi[year] / self.__cpi[2012]
+                renewal = self.__annualised_renewal[technology] * self.__cpi[year] / self.__cpi[2004]
+                maintenance_cost = []
+                renewal_cost = []
+                for y in self.__years[technology]:
+                    maintenance_cost.append(mcost)
+                    renewal_cost.append(renewal)
+                discount_maintenance_cost = [(d * m) + (d*r) for d, m, r in zip(self.__discount_factor[technology], maintenance_cost,renewal_cost)]
+                return sum(discount_maintenance_cost)
 
-        '''Maintenance costs from Music manual, 2013'''
-
-        def maint_cost(self, technology, area, year):
-            if technology == 'wetland':
-                cost = 6.831 * area **0.8634
-            elif technology == 'raingarden':
-                cost = 48.87*self.const_cost(technology, area, year)**0.4410
-            elif technology == 'pond':
-                cost = 185.4 * area ** 0.4780
-            mcost = cost* self.__cpi[year] / self.__cpi[2004]
-            renewal = self.__annualised_renewal[technology] * self.__cpi[year] / self.__cpi[2004]
-            maintenance_cost = []
-            renewal_cost = []
-            for y in self.__years[technology]:
-                maintenance_cost.append(mcost)
-                renewal_cost.append(renewal)
-            discount_maintenance_cost = [(d * m) + (d*r) for d, m, r in zip(self.__discount_factor[technology], maintenance_cost,renewal_cost)]
-            return sum(discount_maintenance_cost)
+            ### Maintenance costs from Music manual, 2013 ###
+            elif source == "music":
+                if technology == 'wetland':
+                    cost = 6.831 * area **0.8634
+                elif technology == 'raingarden':
+                    cost = 48.87*self.const_cost(technology, area, year, source)**0.4410
+                elif technology == 'pond':
+                    cost = 185.4 * area ** 0.4780
+                mcost = cost* self.__cpi[year] / self.__cpi[2004]
+                renewal = self.__annualised_renewal[technology] * self.__cpi[year] / self.__cpi[2004]
+                maintenance_cost = []
+                renewal_cost = []
+                for y in self.__years[technology]:
+                    maintenance_cost.append(mcost)
+                    renewal_cost.append(renewal)
+                discount_maintenance_cost = [(d * m) + (d*r) for d, m, r in zip(self.__discount_factor[technology], maintenance_cost,renewal_cost)]
+                return sum(discount_maintenance_cost)
 
         """ Total PV costs function for Parson Brickerhoff"""
         # def pv_total_costs(self, year, technology, area):
@@ -353,12 +360,12 @@ class Heuristics(Module):
         #         raise ValueError("can't calculate total costs")
 
         """Function for Music"""
-        def pv_total_costs(self, year, technology, area):
-            decomissioning_cost = (self.const_cost(technology, area, year)*self.__decomissioning[technology])
+        def pv_total_costs(self, year, technology, area, source):
+            decomissioning_cost = (self.const_cost(technology, area, year, source)*self.__decomissioning[technology])
             disc_decom_cost = decomissioning_cost* 1. / (1. + self.discount_rate) ** (self.__lifespans[technology])
 
             try:
-                return self.const_cost(technology, area, year) + self.maint_cost(technology, area,year)+disc_decom_cost
+                return self.const_cost(technology, area, year, source) + self.maint_cost(technology, area,year, source)+disc_decom_cost
             except (LookupError):
                 raise ValueError("can't calculate total costs")
 
@@ -440,6 +447,7 @@ class Heuristics(Module):
                 c.SetField("offset_source", self.offset_source)
                 c.SetField("offset_scenario", self.offset_scenario)
                 c.SetField("budget_source", self.budget_source)
+                c.SetField("cost_source", self.cost_source)
 
                 c.SetField("lifespan_rg", self.lifespan_rg)
                 c.SetField("lifespan_wetland", self.lifespan_wetland)
@@ -520,8 +528,8 @@ class Heuristics(Module):
                         # define the area
 
 
-                        cost = self.const_cost(technology, conArea, year) * const_cost_factor
-                        opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
+                        cost = self.const_cost(technology, conArea, year, self.cost_source) * const_cost_factor
+                        opex = self.maint_cost(technology, conArea, year, self.cost_source) * maint_cost_factor
 
                         if cost <= remaining_budget:
                             # print 'cost is within budget'
@@ -547,7 +555,7 @@ class Heuristics(Module):
                             p.SetField("installation_year", year)
                             p.SetField("conv_area", conArea)
 
-                            pvc = self.pv_total_costs(year, technology, conArea)
+                            pvc = self.pv_total_costs(year, technology, conArea, self.cost_source)
                             pvb = self.pv_benefit(b, technology)
                             npv = pvb - pvc
 
@@ -612,8 +620,8 @@ class Heuristics(Module):
                         conArea = round(conArea,2)
                         # percent_treated = conArea / requiredArea
 
-                        cost = self.const_cost(technology, conArea, year) * const_cost_factor
-                        opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
+                        cost = self.const_cost(technology, conArea, year, self.cost_source) * const_cost_factor
+                        opex = self.maint_cost(technology, conArea, year, self.cost_source) * maint_cost_factor
 
                         if cost <= remaining_budget:
                             # print 'cost is within budget'
@@ -641,7 +649,7 @@ class Heuristics(Module):
                             p.SetField("basin_percent_treated", percent_treated)
                             p.SetField("basin_eia_treated", eia_treated)
 
-                            pvc = self.pv_total_costs(year, technology, conArea)
+                            pvc = self.pv_total_costs(year, technology, conArea, self.cost_source)
                             pvb = self.pv_benefit(b, technology)
                             npv = pvb - pvc
 
@@ -723,7 +731,7 @@ class Heuristics(Module):
                         if len(list_installed_tech) >= 1:
                             # print "More than one option available"
                             for i in list_installed_tech:
-                                pvc = self.pv_total_costs(year, i, dict_conv_area[i])
+                                pvc = self.pv_total_costs(year, i, dict_conv_area[i], self.cost_source)
 
                                 # removal = self.__removalRate[i]
                                 N_removed = self.n_removed(dict_conv_area[i]/self.design_curves(self.expected_removal, i), runoff)
@@ -735,8 +743,8 @@ class Heuristics(Module):
                             conArea = dict_conv_area[technology]
                             # percent_treated = conArea / dict_required_area[technology]
 
-                            cost = self.const_cost(technology, conArea, year) * const_cost_factor
-                            opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
+                            cost = self.const_cost(technology, conArea, year, self.cost_source) * const_cost_factor
+                            opex = self.maint_cost(technology, conArea, year, self.cost_source) * maint_cost_factor
 
                             if cost <= remaining_budget:
                                 # print 'cost is within budget'
@@ -842,15 +850,15 @@ class Heuristics(Module):
                         if len(list_installed_tech) >= 1:
                             # print "More than one option available"
                             for i in list_installed_tech:
-                                pvc = self.pv_total_costs(year, i, dict_conv_area[i])
+                                pvc = self.pv_total_costs(year, i, dict_conv_area[i], self.cost_source)
                                 costs[i] = pvc
                             technology = min(costs)
                         # Otherwise select the only option available
                             conArea = dict_conv_area[technology]
                             # percent_treated = conArea / dict_required_area[technology]
 
-                            cost = self.const_cost(technology, conArea, year) * const_cost_factor
-                            opex = self.maint_cost(technology, conArea, year) * maint_cost_factor
+                            cost = self.const_cost(technology, conArea, year, self.cost_source) * const_cost_factor
+                            opex = self.maint_cost(technology, conArea, year, self.cost_source) * maint_cost_factor
 
                             if cost <= remaining_budget:
                                 # print 'cost is within budget'

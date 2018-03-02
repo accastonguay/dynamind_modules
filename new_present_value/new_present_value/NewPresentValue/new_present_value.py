@@ -20,9 +20,9 @@ class NewPresentValue(Module):
 
         self.createParameter("source_costs", STRING)
         self.source_costs = "tam"
-
-        self.createParameter("source_wtp", STRING)
-        self.source_wtp = "hensher"
+        #
+        # self.createParameter("source_wtp", STRING)
+        # self.source_wtp = "hensher"
 
 
 
@@ -45,6 +45,15 @@ class NewPresentValue(Module):
 
         self.__fixed_water_charge = {2005: 56.865, 2006: 59.395, 2007: 61.895, 2008: 69.335, 2009: 82.47, 2010: 114.7, 2011: 130.13, 2012: 120.26,
                       2013: 148.08, 2014: 171.49}
+        self.__dict7 = {2004: 0.76285, 2005: 0.7671, 2006: 0.8013, 2007: 0.83505, 2008: 0.93545, 2009: 1.1362,
+                        2010: 1.39375, 2011: 1.65495, 2012: 1.7756, 2013: 2.1863, 2014: 2.57465, 2015: 2.58615}
+        self.__dict8 = {2004: 0.82785, 2005: 0.900025, 2006: 0.940075, 2007: 0.97965, 2008: 1.09745, 2009: 1.33295,
+                        2010: 1.6351, 2011: 1.9416, 2012: 2.0832, 2013: 2.56505, 2014: 3.02065, 2015: 3.0322}
+        self.__dict9 = {2004: 1.03785, 2005: 1.329625, 2006: 1.388875, 2007: 1.4474, 2008: 1.62145, 2009: 1.96935,
+                        2010: 2.41575, 2011: 2.8686, 2012: 3.0778, 2013: 3.78975, 2014: 4.46295, 2015: 4.4821}
+
+        self.__sewer_price = {2005: 0.9921, 2006: 1.0363, 2007: 1.07995, 2008: 1.2098, 2009: 1.41535, 2010: 1.6161,
+                              2011: 1.8371, 2012: 1.9546, 2013: 2.0227, 2014: 2.0908}
 
         self.__fixed_sewer_charge = {2005: 138.895,
                                      2006: 145.085,
@@ -124,18 +133,20 @@ class NewPresentValue(Module):
 
         self.__rwht = ViewContainer(self.rwht_view_name, COMPONENT, READ)
 
-        self.__rwht.addAttribute("year", Attribute.INT, READ)
         self.__rwht.addAttribute("volume", Attribute.DOUBLE, READ)
-        self.__rwht.addAttribute("price", Attribute.DOUBLE, READ)
+        # self.__rwht.addAttribute("price", Attribute.DOUBLE, READ)
         # self.__rwht.addAttribute("wtp_lata", Attribute.DOUBLE, READ)
         self.__rwht.addAttribute("garden", Attribute.INT, READ)
-        self.__rwht.addAttribute("wtp_hensher", Attribute.INT, READ)
-        self.__rwht.addAttribute("water_usage_charge", Attribute.DOUBLE, READ)
-        self.__rwht.addAttribute("sewer_usage_charge", Attribute.DOUBLE, READ)
-
+        # self.__rwht.addAttribute("water_usage_charge", Attribute.DOUBLE, READ)
+        # self.__rwht.addAttribute("sewer_usage_charge", Attribute.DOUBLE, READ)
+        self.__rwht.addAttribute("price", Attribute.DOUBLE, WRITE)
+        # self.__rwht.addAttribute("sewer_price", Attribute.DOUBLE, WRITE)
+        self.__rwht.addAttribute("level", Attribute.INT, WRITE)
 
         self.__rwht.addAttribute("outdoor_water_savings", Attribute.DOUBLE, READ)
         self.__rwht.addAttribute("annual_water_savings", Attribute.DOUBLE, READ)
+        self.__rwht.addAttribute("total_daily_demand", Attribute.DOUBLE, READ)
+        self.__rwht.addAttribute("total_sewerage", Attribute.DOUBLE, READ)
 
         self.__rwht.addAttribute("const_cost_indoor", Attribute.DOUBLE, WRITE)
         self.__rwht.addAttribute("const_cost_outdoor", Attribute.DOUBLE, WRITE)
@@ -149,28 +160,34 @@ class NewPresentValue(Module):
         self.__rwht.addAttribute("pv_indoor", Attribute.DOUBLE, WRITE)
         self.__rwht.addAttribute("pv_outdoor", Attribute.DOUBLE, WRITE)
         # self.__rwht.addAttribute("source_costs", Attribute.STRING, WRITE)
-        self.__rwht.addAttribute("source_wtp", Attribute.STRING, WRITE)
-        self.__rwht.addAttribute("discount_rate", Attribute.DOUBLE, WRITE)
-        self.__rwht.addAttribute("tank_life", Attribute.DOUBLE, WRITE)
-        self.__rwht.addAttribute("plumbing_cost", Attribute.DOUBLE, WRITE)
-        self.__rwht.addAttribute("installation_cost", Attribute.DOUBLE, WRITE)
-        self.__rwht.addAttribute("pump_cost", Attribute.DOUBLE, WRITE)
-        self.__rwht.addAttribute("maintenance_cost", Attribute.DOUBLE, WRITE)
-        self.__rwht.addAttribute("add_cost_coeff", Attribute.DOUBLE, WRITE)
-        self.__rwht.addAttribute("wtp", Attribute.DOUBLE, WRITE)
+        # self.__rwht.addAttribute("source_wtp", Attribute.STRING, WRITE)
+
         self.__rwht.addAttribute("water_supply_bill", Attribute.DOUBLE, WRITE)
         self.__rwht.addAttribute("sewer_bill", Attribute.DOUBLE, WRITE)
         self.__rwht.addAttribute("drainage_bill", Attribute.DOUBLE, WRITE)
         self.__rwht.addAttribute("park_bill", Attribute.DOUBLE, WRITE)
         self.__rwht.addAttribute("total_water_bill", Attribute.DOUBLE, WRITE)
 
-        self.__rwht.addAttribute("const_cost2", Attribute.DOUBLE, WRITE)
-        self.__rwht.addAttribute("const_cost5", Attribute.DOUBLE, WRITE)
-        self.__rwht.addAttribute("const_cost10", Attribute.DOUBLE, WRITE)
+        self.__city = ViewContainer("city", COMPONENT, READ)
+        self.__city.addAttribute("year", Attribute.INT, READ)
 
-        self.registerViewContainers([self.__rwht])
+        self.__city.addAttribute("pump_cost", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("maintenance_cost", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("add_cost_coeff", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("plumbing_cost", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("const_cost2", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("const_cost5", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("const_cost10", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("discount_rate", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("tank_life", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("installation_cost", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("energy_use", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("energy_cost", Attribute.DOUBLE, WRITE)
+        self.__city.addAttribute("wtp", Attribute.INT, READ)
+        # self.__rwht.addAttribute("wtp", Attribute.DOUBLE, WRITE)
 
 
+        self.registerViewContainers([self.__rwht, self.__city])
 
     """
     Data Manipulation Process (DMP)
@@ -278,30 +295,72 @@ class NewPresentValue(Module):
     def run(self):
         # Data Stream Manipulation
 
+        self.__city.reset_reading()
+        for c in self.__city:
+            c.SetField("const_cost2", self.const_cost2)
+            c.SetField("const_cost5", self.const_cost5)
+            c.SetField("const_cost10", self.const_cost10)
+            c.SetField("discount_rate", self.discount_rate)
+            c.SetField("tank_life", self.tank_life)
+            c.SetField("plumbing_cost", self.plumbing_cost)
+            c.SetField("installation_cost", self.installation_cost)
+            c.SetField("pump_cost", self.pump_cost)
+            c.SetField("maintenance_cost", self.maintenance_cost)
+            c.SetField("add_cost_coeff", self.add_cost_coeff)
+            c.SetField("energy_use", self.energy_use)
+            c.SetField("energy_cost", self.energy_cost)
+            new_wtp = c.GetFieldAsDouble("wtp")
+            year = c.GetFieldAsInteger("year")
+
+        self.__city.finalise()
+
         self.__rwht.reset_reading()
 
         for r in self.__rwht:
 
-            year = r.GetFieldAsInteger("year")
             volume = r.GetFieldAsDouble("volume")
-            price = r.GetFieldAsDouble("price")
+            # price = r.GetFieldAsDouble("price")
             annual_water_savings = r.GetFieldAsDouble("annual_water_savings")
             outdoor_water_savings = r.GetFieldAsDouble("outdoor_water_savings")
-            # wtp = r.GetFieldAsDouble("wtp")
             garden = r.GetFieldAsInteger("garden")
+            demand = r.GetFieldAsDouble("total_daily_demand")
+            sewerage = r.GetFieldAsDouble("total_sewerage")
 
-            if self.source_wtp == "hensher":
-                new_wtp = r.GetFieldAsDouble("wtp_hensher")
-                water_supply_bill = r.GetFieldAsDouble("water_usage_charge")+self.__fixed_water_charge[year]
-                sewer_bill=  r.GetFieldAsDouble("sewer_usage_charge") + self.__fixed_sewer_charge[year]
-                drainage_bill = self.__fixed_drainage_charge[year]
-                park_bill = self.__park_charge[year]
-                total_water_bill = water_supply_bill + sewer_bill + drainage_bill + park_bill
-                wtp = new_wtp*total_water_bill
-            # elif self.source_wtp == "lata":
-            #     wtp = r.GetFieldAsDouble("wtp_lata")
+            # Calculate water charges
 
+            if year < 2004:
+                price = self.__f(year)
+                r.SetField("price", price)
+                r.SetField("level", 1)
+            elif year == 2004:
+                r.SetField("price", 0.7757)
+                r.SetField("level", 1)
+            elif year >= 2005:
+                if demand < 440:
+                    price = self.__dict7[year]
+                    r.SetField("price", price)
+                    r.SetField("level", 1)
+                elif 440 <= demand < 880:
+                    price = self.__dict8[year]
+                    r.SetField("price", price)
+                    r.SetField("level", 2)
+                elif demand >= 880:
+                    price = self.__dict9[year]
+                    r.SetField("price", price)
+                    r.SetField("level", 3)
+            ann_total_water_usage = demand * 365 / 1000.
+            water_usage_charge = ann_total_water_usage * price
+            water_supply_bill = water_usage_charge + self.__fixed_water_charge[year]
 
+            sewer_usage_charge = self.__sewer_price[year]*sewerage
+            sewer_bill=  sewer_usage_charge + self.__fixed_sewer_charge[year]
+            drainage_bill = self.__fixed_drainage_charge[year]
+            park_bill = self.__park_charge[year]
+            total_water_bill = water_supply_bill + sewer_bill + drainage_bill + park_bill
+
+            # Calculate WTP to avoid water restrictions
+
+            wtp = new_wtp*total_water_bill
 
             # Calculate PV for indoor use
             pv_total_costs_indoor = self.pv_total_costs_indoor_fun(year, volume, annual_water_savings)
@@ -321,24 +380,10 @@ class NewPresentValue(Module):
             r.SetField("pv_outdoor", pv_outdoor)
             r.SetField("const_cost_outdoor", self.construction_costs_outdoor(year, volume))
 
-            r.SetField("source_wtp", self.source_wtp)
-
-            r.SetField("discount_rate", self.discount_rate)
-            r.SetField("tank_life", self.tank_life)
-            r.SetField("plumbing_cost", self.plumbing_cost)
-            r.SetField("installation_cost", self.installation_cost)
-            r.SetField("pump_cost", self.pump_cost)
-            r.SetField("maintenance_cost", self.maintenance_cost)
-            r.SetField("add_cost_coeff", self.add_cost_coeff)
-            r.SetField("wtp", wtp)
             r.SetField("water_supply_bill", water_supply_bill)
             r.SetField("sewer_bill", sewer_bill)
             r.SetField("drainage_bill", drainage_bill)
             r.SetField("park_bill", park_bill)
             r.SetField("total_water_bill", total_water_bill)
-            r.SetField("const_cost2", self.const_cost2)
-            r.SetField("const_cost5", self.const_cost5)
-            r.SetField("const_cost10", self.const_cost10)
-
 
         self.__rwht.finalise()
