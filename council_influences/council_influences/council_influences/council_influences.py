@@ -89,6 +89,7 @@ class council_influences(Module):
             self.parcel.addAttribute("basin_percent_treated", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("basin_eia_treated", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("installation_year", Attribute.INT, WRITE)
+            self.parcel.addAttribute("contribution_year", Attribute.INT, WRITE)
             self.parcel.addAttribute("OPEX", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("temp_cost", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("pv_cost", Attribute.DOUBLE, WRITE)
@@ -274,10 +275,6 @@ class council_influences(Module):
 
                 ### Strategy 1: Mandatory installation of raingarden ###
                 if influence_rule == 1:
-                    # print 'year == released', year == released
-                    # print 'type year: ', type(year), 'type released', type(released)
-                    # print 'year: ', year,  'released: ', released
-
                     if year == released and outdoor_imp > 0:
                         # print "entered second loop"
                         technology = "raingarden"
@@ -295,11 +292,10 @@ class council_influences(Module):
 
                         N_removed = self.n_removed(eia_treated, runoff)
 
-                        b = self.benefit_fun(year, N_removed)
+                        b = self.benefit_fun(offset_rate, N_removed)
 
                         p.SetField("new_landuse", technology)
                         p.SetField("N_removed", N_removed)
-                        p.SetField("benefit", b)
                         p.SetField("private_cost", cost)
                         p.SetField("temp_cost", cost)
                         p.SetField("OPEX", opex)
@@ -308,6 +304,7 @@ class council_influences(Module):
                         p.SetField("percent_treated", percent_treated)
                         p.SetField("offset_paid", 0)
                         p.SetField("basin_eia_treated", eia_treated)
+                        p.SetField("nrem_benefit", b)
 
                         pvc = self.pv_total_costs(year, technology, conArea, self.cost_source)
 
@@ -327,36 +324,42 @@ class council_influences(Module):
                         requiredArea = self.design_curves(1, technology) * outdoor_imp
 
                         conArea = min(requiredArea, area)
-                        percent_treated = conArea / requiredArea
-                        net_contribution = gross_contribution - gross_contribution*percent_treated
-
                         cost = self.const_cost(technology, conArea, year, self.cost_source) * const_cost_factor
                         opex = self.maint_cost(technology, conArea, year, self.cost_source) * maint_cost_factor
-                        eia_treated = conArea / self.design_curves(self.expected_removal, technology)
 
-                        N_removed = self.n_removed(eia_treated, runoff)
-                        b = self.benefit_fun(year, N_removed)
+                        if cost > gross_contribution:
+                            net_contribution = gross_contribution
+                            p.SetField("offset_paid", net_contribution)
+                            p.SetField("contribution_year", year)
 
-                        p.SetField("new_landuse", technology)
-                        p.SetField("N_removed", N_removed)
-                        p.SetField("benefit", b)
-                        p.SetField("private_cost", cost)
-                        p.SetField("temp_cost", cost)
-                        p.SetField("OPEX", opex)
-                        p.SetField("installation_year", year)
-                        p.SetField("conv_area", conArea)
-                        p.SetField("percent_treated", percent_treated)
-                        p.SetField("offset_paid", net_contribution)
-                        p.SetField("basin_eia_treated", eia_treated)
+                        elif cost < gross_contribution:
 
-                        pvc = self.pv_total_costs(year, technology, conArea, self.cost_source)
+                            percent_treated = conArea / requiredArea
+                            net_contribution = gross_contribution - gross_contribution*percent_treated
 
-                        pv_benefit_nrem = self.pv_benefit(b, technology)
-                        npv = pv_benefit_nrem - pvc
+                            eia_treated = conArea / self.design_curves(self.expected_removal, technology)
+                            N_removed = self.n_removed(eia_treated, runoff)
+                            b = self.benefit_fun(offset_rate, N_removed)
+                            p.SetField("basin_eia_treated", eia_treated)
+                            p.SetField("nrem_benefit", b)
+                            p.SetField("new_landuse", technology)
+                            p.SetField("N_removed", N_removed)
+                            p.SetField("benefit", b)
+                            p.SetField("private_cost", cost)
+                            p.SetField("temp_cost", cost)
+                            p.SetField("OPEX", opex)
+                            p.SetField("installation_year", year)
+                            p.SetField("conv_area", conArea)
+                            p.SetField("percent_treated", percent_treated)
+                            p.SetField("offset_paid", net_contribution)
 
-                        p.SetField("pv_cost", pvc)
-                        p.SetField("pv_benefit_nrem", pvb_nrem)
-                        p.SetField("pv_benefit_total", pvb_nrem)
-                        p.SetField("npv", npv)
-                        p.SetField("ownership", "private")
+                            pvc = self.pv_total_costs(year, technology, conArea, self.cost_source)
+                            pvb_nrem = self.pv_benefit(b, technology)
+                            npv = pvb_nrem - pvc
+
+                            p.SetField("pv_cost", pvc)
+                            p.SetField("pv_benefit_nrem", pvb_nrem)
+                            p.SetField("pv_benefit_total", pvb_nrem)
+                            p.SetField("npv", npv)
+                            p.SetField("ownership", "private")
             self.parcel.finalise()

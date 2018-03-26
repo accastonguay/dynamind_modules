@@ -140,6 +140,17 @@ class Heuristics(Module):
                                  2010: 0,
                                  2011: 0,
                                  2012: 130000}
+            self.__budget_elwood ={2005: 126184.,
+                                   2006: 15749.,
+                                   2007: 105012.,
+                                   2008: 0,
+                                   2009: 16798.,
+                                   2010: 10992.,
+                                   2011: 129015.,
+                                   2012: 202858.,
+                                   2013: 0,
+                                   2014: 0}
+
 
             """Pv costs from Parson Brickerhoff"""
             # self.__dict_pvcosts = {2005: {'KINGSTON':  34113},
@@ -470,6 +481,9 @@ class Heuristics(Module):
                 elif self.budget_source == "pvcosts":
                     budget = self.__dict_pvcosts[year]
                     c.SetField("budget", budget)
+                elif self.budget_source == "Elwood":
+                    budget = self.__budget_elwood[year]
+                    c.SetField("budget", budget)
                 elif self.budget_source == "budget1":
                     budget = 250000
                     c.SetField("budget", budget)
@@ -539,9 +553,7 @@ class Heuristics(Module):
                 # full_budget  self.__totalCost
                 remaining_budget = budget - self.__totalCost
                 # Estimate runoff for current year
-                # runoff = self.__rainfall[year] * rf_factor * 0.9 * 0.20
                 rainfall = rainfall/1000.
-                # runoff = rainfall * rf_factor * 0.9 * 0.20
                 runoff = rainfall * rf_factor * 0.9
                 offset_rate = self.offset(year, self.offset_source, self.offset_scenario)
 
