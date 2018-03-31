@@ -18,18 +18,20 @@ class NewRWHTOptions(Module):
     def init(self):
 
         self.__parcel = ViewContainer("parcel", COMPONENT, READ)
-        self.__parcel.addAttribute("annual_outdoor_demand", Attribute.DOUBLE, READ)
         self.__parcel.addAttribute("annual_non_potable_demand", Attribute.DOUBLE, READ)
-        self.__parcel.addAttribute("roof_area", Attribute.DOUBLE, READ)
+        self.__parcel.addAttribute("annual_outdoor_demand", Attribute.DOUBLE, READ)
         self.__parcel.addAttribute("persons", Attribute.INT, READ)
         self.__parcel.addAttribute("rainfall", Attribute.INT, READ)
+        self.__parcel.addAttribute("released", Attribute.INT, READ)
+        self.__parcel.addAttribute("roof_area", Attribute.DOUBLE, READ)
 
         self.__rwht_option = ViewContainer("rwht_option", COMPONENT, WRITE)
-        self.__rwht_option.addAttribute("outdoor_water_savings", Attribute.DOUBLE, WRITE)
         self.__rwht_option.addAttribute("non_potable_savings", Attribute.DOUBLE, WRITE)
-        self.__rwht_option.addAttribute("volume", Attribute.DOUBLE, WRITE)
-        self.__rwht_option.addAttribute("total_sewerage", Attribute.DOUBLE, WRITE)
+        self.__rwht_option.addAttribute("outdoor_water_savings", Attribute.DOUBLE, WRITE)
         self.__rwht_option.addAttribute("parcel_id", Attribute.INT, WRITE)
+        self.__rwht_option.addAttribute("released", Attribute.INT, WRITE)
+        self.__rwht_option.addAttribute("total_sewerage", Attribute.DOUBLE, WRITE)
+        self.__rwht_option.addAttribute("volume", Attribute.DOUBLE, WRITE)
 
         self.registerViewContainers([self.__parcel, self.__rwht_option])
 
@@ -48,6 +50,8 @@ class NewRWHTOptions(Module):
             roof_area = p.GetFieldAsDouble("roof_area")
             rainfall = p.GetFieldAsDouble("rainfall")
             persons = p.GetFieldAsInteger("persons")
+            released = p.GetFieldAsInteger("released")
+
 
             for v in [2,5,10]:
                 option = self.__rwht_option.create_feature()
@@ -66,6 +70,8 @@ class NewRWHTOptions(Module):
                 option.SetField("outdoor_water_savings", max(0,outdoor_water_savings))
                 option.SetField("non_potable_savings",  max(0,non_potable_savings))
                 option.SetField("total_sewerage", 35)
+                option.SetField("released", released)
+
                 option.SetField("parcel_id", p.GetFID())
 
         self.__parcel.finalise()

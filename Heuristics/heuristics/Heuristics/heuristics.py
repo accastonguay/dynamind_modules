@@ -73,7 +73,7 @@ class Heuristics(Module):
             '''Index Numbers ;  Non-tradables ;  Melbourne'''
 
             self.__cpi = {2004: 77, 2005: 79.425, 2006: 81.675, 2007: 84.5, 2008: 88.95, 2009: 90.9, 2010: 94.775, 2011: 98.425,
-             2012: 101.85}
+             2012: 101.85, 2013: 101.85,2014: 101.85, 2015: 101.85}
 
             self.__suitable_zoneLu = {"wetland": ["GRZ1_Unclassified Private Land", "GRZ2_Unclassified Private Land",
                                                   "PCRZ_Nature Reserve", "PCRZ_Unclassified Private Land",
@@ -140,16 +140,11 @@ class Heuristics(Module):
                                  2010: 0,
                                  2011: 0,
                                  2012: 130000}
-            self.__budget_elwood ={2005: 126184.,
-                                   2006: 15749.,
-                                   2007: 105012.,
-                                   2008: 0,
-                                   2009: 16798.,
-                                   2010: 10992.,
-                                   2011: 129015.,
-                                   2012: 202858.,
-                                   2013: 0,
-                                   2014: 0}
+
+            # Outliers removed
+            self.__budget_elwood ={2005: 224728, 2006: 11927, 2007: 203063, 2008: 0, 2009: 13133,
+                                   2010: 6969, 2011: 276188, 2012: 349791, 2013: 0, 2014: 0}
+
 
 
             """Pv costs from Parson Brickerhoff"""
@@ -196,88 +191,69 @@ class Heuristics(Module):
                                   "pond": 100,
                                   "raingarden": 5}
 
-
             self.__lifespan = {"wetland": 40,
                                   "pond": 50,
                                   "raingarden": 37}
 
-
-
             self.parcel = ViewContainer("parcel", COMPONENT, READ)
-            self.parcel.addAttribute("original_landuse", Attribute.STRING, READ)
-            self.parcel.addAttribute("convertible_area", Attribute.DOUBLE, READ)
-            self.parcel.addAttribute("zone_lu", Attribute.STRING, READ)
-            self.parcel.addAttribute("max_prob_technology", Attribute.STRING, READ)
-            self.parcel.addAttribute("new_impervious_catchment", Attribute.DOUBLE, READ)
-            self.parcel.addAttribute("roof_area", Attribute.DOUBLE, READ)
 
+            self.parcel.addAttribute("basin_percent_treated", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("basin_eia_treated", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("block_id", Attribute.INT, READ)
-
-            self.parcel.addAttribute("new_landuse", Attribute.STRING, WRITE)
-            self.parcel.addAttribute("council", Attribute.STRING, READ)
-
-            self.parcel.addAttribute("N_removed", Attribute.DOUBLE, WRITE)
-            self.parcel.addAttribute("nrem_benefit", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("conv_area", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("convertible_area", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("cost", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("council", Attribute.STRING, READ)
+            self.parcel.addAttribute("installation_year", Attribute.INT, WRITE)
+            self.parcel.addAttribute("irrigation_demand", Attribute.DOUBLE, READ)
+            self.parcel.addAttribute("irrigation_supply", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("max_prob_technology", Attribute.STRING, READ)
+            self.parcel.addAttribute("N_removed", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("new_impervious_catchment", Attribute.DOUBLE, READ)
+            self.parcel.addAttribute("new_landuse", Attribute.STRING, WRITE)
+            self.parcel.addAttribute("npv", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("nrem_benefit", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("OPEX", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("original_landuse", Attribute.STRING, READ)
+            self.parcel.addAttribute("ownership", Attribute.STRING, WRITE)
             self.parcel.addAttribute("private_cost", Attribute.DOUBLE, WRITE)
-            # self.parcel.addAttribute("avg_wtp_stream", Attribute.DOUBLE, READ)
-            # self.parcel.addAttribute("decision_rule", Attribute.INT, READ)
-
-            # self.parcel.addAttribute("random", Attribute.DOUBLE, READ)
-            # self.parcel.addAttribute("year", Attribute.INT, READ)
-            # self.parcel.addAttribute("budget", Attribute.DOUBLE, READ)
-
-            self.parcel.addAttribute("released", Attribute.INT, READ)
-
             self.parcel.addAttribute("prob_rg", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("prob_pond", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("prob_wetland", Attribute.DOUBLE, READ)
-
-            self.parcel.addAttribute("conv_area", Attribute.DOUBLE, WRITE)
-            self.parcel.addAttribute("basin_percent_treated", Attribute.DOUBLE, WRITE)
-            self.parcel.addAttribute("basin_eia_treated", Attribute.DOUBLE, WRITE)
-
-            self.parcel.addAttribute("installation_year", Attribute.INT, WRITE)
-            self.parcel.addAttribute("OPEX", Attribute.DOUBLE, WRITE)
-            self.parcel.addAttribute("temp_cost", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("pv_cost", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("pv_benefit_nrem", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("pv_benefit_irri", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("pv_benefit_total", Attribute.DOUBLE, WRITE)
-            self.parcel.addAttribute("ownership", Attribute.STRING, WRITE)
-
-            self.parcel.addAttribute("npv", Attribute.DOUBLE, WRITE)
-            self.parcel.addAttribute("random_nmr", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("rainfall", Attribute.DOUBLE, READ)
-            self.parcel.addAttribute("irrigation_demand", Attribute.DOUBLE, READ)
-            self.parcel.addAttribute("irrigation_supply", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("random_nmr", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("released", Attribute.INT, READ)
+            self.parcel.addAttribute("roof_area", Attribute.DOUBLE, READ)
+            self.parcel.addAttribute("temp_cost", Attribute.DOUBLE, WRITE)
+            self.parcel.addAttribute("zone_lu", Attribute.STRING, READ)
 
+            # self.council = ViewContainer("council", COMPONENT, READ)
+            self.city = ViewContainer("city", COMPONENT, READ)
 
-            self.council = ViewContainer("council", COMPONENT, READ)
-            self.council.addAttribute("const_cost_factor", Attribute.DOUBLE, READ)
-            self.council.addAttribute("maint_cost_factor", Attribute.DOUBLE, READ)
-            self.council.addAttribute("budget_source", Attribute.STRING, READ)
-            self.council.addAttribute("budget_factor", Attribute.DOUBLE, READ)
-            self.council.addAttribute("rf_factor", Attribute.DOUBLE, READ)
-            self.council.addAttribute("private_contribution", Attribute.DOUBLE, READ)
-            # self.council.addAttribute("budget", Attribute.DOUBLE, READ)
-            self.council.addAttribute("year", Attribute.INT, READ)
-            self.council.addAttribute("decision_rule", Attribute.INT, READ)
-            self.council.addAttribute("discount_rate", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("expected_removal", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("offset_source", Attribute.STRING, WRITE)
-            self.council.addAttribute("offset_scenario", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("lifespan_rg", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("lifespan_wetland", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("lifespan_pond", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("budget", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("budget_source", Attribute.STRING, WRITE)
-            self.council.addAttribute("cost_source", Attribute.STRING, WRITE)
-
-
+            self.city.addAttribute("budget", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("budget_factor", Attribute.DOUBLE, READ)
+            self.city.addAttribute("budget_source", Attribute.STRING, WRITE)
+            self.city.addAttribute("const_cost_factor", Attribute.DOUBLE, READ)
+            self.city.addAttribute("cost_source", Attribute.STRING, WRITE)
+            self.city.addAttribute("decision_rule", Attribute.INT, READ)
+            self.city.addAttribute("discount_rate", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("expected_removal", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("lifespan_pond", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("lifespan_rg", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("lifespan_wetland", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("maint_cost_factor", Attribute.DOUBLE, READ)
+            self.city.addAttribute("offset_scenario", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("offset_source", Attribute.STRING, WRITE)
+            self.city.addAttribute("private_contribution", Attribute.DOUBLE, READ)
+            self.city.addAttribute("rf_factor", Attribute.DOUBLE, READ)
+            self.city.addAttribute("year", Attribute.INT, READ)
 
             #Compile views
-            views = [self.parcel, self.council]
+            views = [self.parcel, self.city]
 
             #Register ViewContainer to stream
             self.registerViewContainers(views)
@@ -457,8 +433,8 @@ class Heuristics(Module):
         def run(self):
             #Data Stream Manipulation
 
-            self.council.reset_reading()
-            for c in self.council:
+            self.city.reset_reading()
+            for c in self.city:
                 decision_rule = c.GetFieldAsInteger("decision_rule")
                 const_cost_factor= c.GetFieldAsDouble("const_cost_factor")
                 maint_cost_factor= c.GetFieldAsDouble("maint_cost_factor")
@@ -514,7 +490,7 @@ class Heuristics(Module):
 
                 budget = budget*budget_factor
 
-            self.council.finalise()
+            self.city.finalise()
 
             self.parcel.reset_reading()
 
