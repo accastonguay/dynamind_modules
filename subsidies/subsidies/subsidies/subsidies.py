@@ -20,12 +20,19 @@ class subsidies(Module):
             self.setIsGDALModule(True)
             #Parameter Definition
 
-            # self.createParameter("restriction", INT)
-
+            #
+            # self.createParameter("scenario_inc2", DOUBLE)
+            # self.createParameter("scenario_inc5", DOUBLE)
+            # self.createParameter("scenario_inc_out", DOUBLE)
+            # self.scenario_inc2 = 0
+            # self.scenario_inc5 = 0
+            # self.scenario_inc_out = 0
 
             self.city = ViewContainer("city", COMPONENT, READ)
 
             self.city.addAttribute("year", Attribute.INT, READ)
+            self.city.addAttribute("scenario_inc5", Attribute.DOUBLE, READ)
+
             self.city.addAttribute("rwht_incentive_2", Attribute.DOUBLE, WRITE)
             self.city.addAttribute("rwht_incentive_5", Attribute.DOUBLE, WRITE)
             self.city.addAttribute("incentive_outdoor", Attribute.DOUBLE, WRITE)
@@ -78,7 +85,7 @@ class subsidies(Module):
                 elif 2007 <= key < 2012:
                     incentive_2[key] = 500
                 elif key >= 2012:
-                    incentive_2[key]=900
+                    incentive_2[key]=950
             
             for key in incentive_5:
                 if key < 2003:
@@ -88,13 +95,19 @@ class subsidies(Module):
                 elif 2007 <= key < 2012:
                     incentive_5[key] = 900
                 elif key >= 2012:
-                    incentive_5[key] = 1500
+                    incentive_5[key] = 1400
 
             for b in self.city:
                 year = b.GetFieldAsInteger("year")
-                b.SetField("rwht_incentive_2", incentive_2[year])
-                b.SetField("rwht_incentive_5", incentive_5[year])
-                b.SetField("incentive_outdoor", incentive_outdoor[year])
+                if year <= 2015:
+                    b.SetField("rwht_incentive_2", incentive_2[year])
+                    b.SetField("rwht_incentive_5", incentive_5[year])
+                    b.SetField("incentive_outdoor", incentive_outdoor[year])
+                else:
+                    scenario_inc5 = b.GetFieldAsDouble("scenario_inc5")
+                    # b.SetField("rwht_incentive_2", self.scenario_inc2)
+                    b.SetField("rwht_incentive_5", scenario_inc5)
+                    # b.SetField("incentive_outdoor", self.scenario_inc_out)
 
             self.city.finalise()
             # self.city.finalise()

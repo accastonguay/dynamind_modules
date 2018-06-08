@@ -426,7 +426,7 @@ class Heuristics(Module):
                 elif year > 2013:
                     offset = 7236
                 else:
-                    offset_dict={2005: 800, 2006: 800, 2007: 800, 2008: 800, 2009: 1100, 2010: 1100, 2011: 2225, 2012: 2225, 2013: 2225}
+                    offset_dict={2005: 51, 2006: 51, 2007: 51, 2008: 51, 2009: 70, 2010: 70, 2011: 141, 2012: 141, 2013: 141}
                     offset = offset_dict[year]
             elif source == "scenario":
                 offset = scenario_offset
@@ -479,14 +479,15 @@ class Heuristics(Module):
                 zone_lu = p.GetFieldAsString("zone_lu")
 
                 if self.budget_source == "budget":
-                    budget = self.__dict_budget[year]
-                    c.SetField("budget", budget)
+                    remaining_budget = self.__dict_budget[year]- self.__totalCost[lga]
+                    c.SetField("budget", remaining_budget)
                 elif self.budget_source == "costs":
-                    budget = self.__dict_costs[year]
-                    c.SetField("budget", budget)
+                    # print lga, self.__totalCost, year, self.__dict_costs
+                    remaining_budget = self.__dict_costs[year]- self.__totalCost[lga]
+                    c.SetField("budget", remaining_budget)
                 elif self.budget_source == "pvcosts":
-                    budget = self.__dict_pvcosts[year]
-                    c.SetField("budget", budget)
+                    remaining_budget = self.__dict_pvcosts[year]- self.__totalCost[lga]
+                    c.SetField("budget", remaining_budget)
                 elif self.budget_source == "Elwood":
                     if lga in self.__budget_elwood.keys():
                         budget = self.__budget_elwood[lga][year]
@@ -803,6 +804,7 @@ class Heuristics(Module):
                                 else:
                                     blocks[block_id] = eia_treated
 
+
                 if decision_rule == 4 and released < 2000:
                     bmps = ["raingarden", "wetland", "pond"]
                     dict_required_area = {}
@@ -920,148 +922,6 @@ class Heuristics(Module):
                                 else:
                                     blocks[block_id] = eia_treated
 
-                                # blocks[block_id] = eia_treated
-
-                # if decision_rule == 5 and released < 2000:
-                #     bmps = ["raingarden", "wetland", "pond"]
-                #     dict_required_area = {}
-                #     if block_id in blocks:
-                #         for i in bmps:
-                #             dict_required_area[i] = self.design_curves(self.expected_removal, i) * (
-                #         impervious_catchment - blocks[block_id])
-                #     # elif impervious_catchment == 0:
-                #     #     requiredArea = self.design_curves(self.expected_removal, technology) * area
-                #     else:
-                #         for i in bmps:
-                #             dict_required_area[i] =  self.design_curves(self.expected_removal, i) * impervious_catchment
-                #
-                #     dict_conv_area = {}
-                #
-                #     for i in dict_required_area:
-                #         if dict_required_area[i] > area:
-                #             dict_conv_area[i] = area
-                #         else:
-                #             dict_conv_area[i] = dict_required_area[i]
-                #
-                #     # if landuse has not yet been converted AND available area is larger than minimum area
-                #     if landuse == newlanduse:
-                #
-                #         # Criteria are met
-                #         list_suitable_parcels = []
-                #         list_installed_tech = []
-                #         # define the area
-                #
-                #         # Dictionary of technologies and probabilities
-                #         d_probs = {'wetland': prob_wl, 'pond': prob_pd, "raingarden": prob_rg}
-                #
-                #         # Select potential technologies based on land use
-                #         for i in self.__suitable_zoneLu.iterkeys():
-                #             if zone_lu in self.__suitable_zoneLu[i] and dict_conv_area[i] > self.__minArea[i]:
-                #                 list_suitable_parcels.append(i)
-                #
-                #         # Select technologies based on probability and landuse suitability
-                #         for i in list_suitable_parcels:
-                #             random_nmr = random.random()
-                #             if random_nmr < d_probs[i]:
-                #                 list_installed_tech.append(i)
-                #
-                #         # List chosen technologies
-                #         # list_installed_tech = [x for x in list_suitable_parcels if random.random() < d_probs[x]]
-                #
-                #         # Create dictionary of benefits for cost-benefit analysis if more than one option
-                #         benefits = {}
-                #         if len(list_installed_tech) >= 1:
-                #             # print "More than one option available"
-                #             for i in list_installed_tech:
-                #                 pvc = self.pv_total_costs(year, i, dict_conv_area[i], self.cost_source)
-                #
-                #                 # removal = self.__removalRate[i]
-                #                 tn_removed = self.n_removed(dict_conv_area[i]/self.design_curves(self.expected_removal, i), runoff)
-                #                 b = self.benefit_fun(offset_rate, tn_removed)
-                #                 if i in ["pond", "wetland"]:
-                #                     irri_supply = min(irrigation_demand,runoff*dict_conv_area[i]/self.design_curves(self.expected_removal, i))
-                #                     tb = b + irri_supply*2.66
-                #                 else:
-                #                     irri_supply = 0
-                #                     tb = b
-                #                 pvb = self.pv_benefit(tb, i)
-                #                 benefits[i]= pvb-pvc
-                #             technology = max(benefits)
-                #         # Otherwise select the only option available
-                #             conArea = dict_conv_area[technology]
-                #             # percent_treated = conArea / dict_required_area[technology]
-                #
-                #             cost = self.const_cost(technology, conArea, year, self.cost_source) * const_cost_factor
-                #             opex = self.maint_cost(technology, conArea, year, self.cost_source) * maint_cost_factor
-                #
-                #             if cost <= remaining_budget:
-                #                 # print 'cost is within budget'
-                #                 # self.benefitdic = {'wetland':136*con_area, 'sedimentation':1341*con_area, 'raingarden': 10244*con_area}
-                #                 eia_treated = conArea / self.design_curves(self.expected_removal, technology)
-                #                 percent_treated = eia_treated / impervious_catchment
-                #                 # b = self.benefitdic[self.technologies[self.tech]]
-                #                 # removal = self.__removalRate[technology]
-                #
-                #                 tn_removed = self.n_removed(eia_treated, runoff)
-                #                 b = self.benefit_fun(offset_rate, tn_removed)
-                #
-                #                 p.SetField("new_landuse", technology)
-                #                 p.SetField("tn_removed", tn_removed)
-                #                 p.SetField("nrem_benefit", b)
-                #                 p.SetField("cost", cost)
-                #                 p.SetField("temp_cost", cost)
-                #                 p.SetField("OPEX", opex)
-                #                 p.SetField("installation_year", year)
-                #                 p.SetField("conv_area", conArea)
-                #                 p.SetField("ownership", "public")
-                #                 p.SetField("random_nmr", random_nmr)
-                #
-                #                 p.SetField("basin_percent_treated", percent_treated)
-                #                 p.SetField("basin_eia_treated", eia_treated)
-                #                 p.SetField("irrigation_supply", irri_supply)
-                #
-                #                 if technology in ["pond", "wetland"]:
-                #                     irri_supply = min(irrigation_demand, runoff * eia_treated)
-                #                     irri_benefit = irri_supply * 2.66
-                #                 else:
-                #                     irri_benefit = 0
-                #
-                #                 pvb_nrem = self.pv_benefit(b, technology)
-                #                 pvb_irri = self.pv_benefit(irri_benefit, technology)
-                #                 pvb_total = pvb_nrem + pvb_irri
-                #
-                #                 p.SetField("pv_benefit_nrem", pvb_nrem)
-                #                 p.SetField("pv_benefit_irri", pvb_irri)
-                #                 p.SetField("pv_benefit_total", pvb_total)
-                #
-                #                 pvc =  self.pv_total_costs(year, technology, conArea, self.cost_source)
-                #
-                #                 npv = pvb_total - pvc
-                #
-                #                 p.SetField("pv_cost", pvc)
-                #                 p.SetField("npv", npv)
-                #
-                #                 # blocks[block_id] = percent_treated
-                #                 if self.budget_source == "pvcosts":
-                #                     self.__totalCost[lga] += pvc
-                #                 else:
-                #                     self.__totalCost[lga] += cost
-                #                 self.__totalBenefit[lga] += b
-                #                 print technology, 'PVB, PVC, NPV: ', str(pvb_total), str(pvc), str(npv)
-                #                 print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
-                #                     conArea)
-                #                 print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost[lga]), ' benefit: ', str(
-                #                     b) + ' budget: ', str(remaining_budget)
-                #
-                #                 # full_budget -= cost
-                #                 # if a pracel in this block has had a wsud, add eia_treated to existing eia_treated,
-                #                 # otherwise add the to the new eia_treated
-                #                 if block_id in blocks:
-                #                     blocks[block_id] += eia_treated
-                #                 else:
-                #                     blocks[block_id] = eia_treated
-
-
-            self.__totalCost[lga] = 0
-            self.__totalBenefit[lga] = 0
+                # self.__totalCost[lga] = 0
+                # self.__totalBenefit[lga] = 0
             self.parcel.finalise()

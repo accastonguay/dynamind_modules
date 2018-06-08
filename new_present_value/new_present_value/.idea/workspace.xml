@@ -20,48 +20,12 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="new_present_value.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="new_present_value.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/NewPresentValue/new_present_value.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="264">
-              <caret line="47" column="51" lean-forward="false" selection-start-line="47" selection-start-column="47" selection-end-line="47" selection-end-column="51" />
+            <state relative-caret-position="73">
+              <caret line="349" column="38" lean-forward="true" selection-start-line="349" selection-start-column="38" selection-end-line="349" selection-end-column="38" />
               <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="cost_sampling.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../../cloud/paper2/cost_sampling.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-150">
-              <caret line="11" column="46" lean-forward="true" selection-start-line="11" selection-start-column="46" selection-end-line="11" selection-end-column="46" />
-              <folding>
-                <element signature="e#0#21#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="sampling_agent.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/../../../cloud/paper3/sampling_agent.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="270">
-              <caret line="60" column="0" lean-forward="true" selection-start-line="60" selection-start-column="0" selection-end-line="60" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#21#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="sampling_agent.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../../cloud/new/sampling_agent.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1125">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#21#0" expanded="true" />
-              </folding>
             </state>
           </provider>
         </entry>
@@ -105,6 +69,10 @@
       <find>__sewer_price</find>
       <find>sewer_price</find>
       <find>__construction_cost_db</find>
+      <find>cpi</find>
+      <find>__fixed_water_charge</find>
+      <find>[year]</find>
+      <find>dict7</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -133,17 +101,17 @@
         <option value="$PROJECT_DIR$/PresentValue/present_value.py" />
         <option value="$PROJECT_DIR$/../../../cloud/test/simplified.py" />
         <option value="$PROJECT_DIR$/../../../cloud/test/webscrape.py" />
-        <option value="$PROJECT_DIR$/NewPresentValue/new_present_value.py" />
         <option value="$PROJECT_DIR$/../../../cloud/paper2/cost_sampling.py" />
         <option value="$PROJECT_DIR$/../../../cloud/paper3/sampling_agent.py" />
+        <option value="$PROJECT_DIR$/NewPresentValue/new_present_value.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
     <option name="x" value="65" />
     <option name="y" value="24" />
-    <option name="width" value="1855" />
-    <option name="height" value="952" />
+    <option name="width" value="1615" />
+    <option name="height" value="962" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -162,7 +130,7 @@
     <panes />
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../Codes/python" />
+    <property name="last_opened_file_path" value="/" />
     <property name="settings.editor.selected.configurable" value="configurable.group.project" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
     <property name="recentsLimit" value="5" />
@@ -429,15 +397,15 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="24" width="1855" height="952" extended-state="6" />
-    <editor active="true" />
+    <frame x="65" y="24" width="1615" height="962" extended-state="6" />
+    <editor active="false" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.05758514" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.01592719" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2662116" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3790776" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2662116" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.0" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -490,15 +458,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/NewPresentValue/new_present_value.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="495">
-          <caret line="33" column="0" lean-forward="false" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../cloud/test/simplified.py" />
     <entry file="file://$PROJECT_DIR$/NewPresentValue/new_present_value.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -599,20 +558,8 @@
     <entry file="file://$PROJECT_DIR$/../../../agent_based_model/temp flood damge.py" />
     <entry file="file://$PROJECT_DIR$/../../../agent_based_model/Plot IEMS fig2.py" />
     <entry file="file://$PROJECT_DIR$/../../../cloud/sampling_agent.py" />
-    <entry file="file://$PROJECT_DIR$/../../../Codes/python/sns_test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="22" column="10" lean-forward="false" selection-start-line="22" selection-start-column="10" selection-end-line="22" selection-end-column="10" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../Codes/python/water_supply_pandas.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="375">
-          <caret line="79" column="3" lean-forward="false" selection-start-line="79" selection-start-column="0" selection-end-line="80" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../Codes/python/sns_test.py" />
+    <entry file="file://$PROJECT_DIR$/../../../Codes/python/water_supply_pandas.py" />
     <entry file="file://$PROJECT_DIR$/../../subsidies/subsidies/subsidies/subsidies.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45">
@@ -650,41 +597,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../cloud/new/sampling_agent.py">
+    <entry file="file://$PROJECT_DIR$/../../../cloud/new/sampling_agent.py" />
+    <entry file="file://$PROJECT_DIR$/../../../cloud/paper2/cost_sampling.py" />
+    <entry file="file://$PROJECT_DIR$/../../../cloud/paper3/sampling_agent.py" />
+    <entry file="file://$PROJECT_DIR$/../../../Paper_scenario/new/new/modules/water_balance.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1125">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#21#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="-148">
+          <caret line="13" column="29" lean-forward="true" selection-start-line="13" selection-start-column="29" selection-end-line="13" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../Paper_scenario/new/new/modules/subsidies.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-958">
+          <caret line="17" column="0" lean-forward="true" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/NewPresentValue/new_present_value.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="47" column="51" lean-forward="false" selection-start-line="47" selection-start-column="47" selection-end-line="47" selection-end-column="51" />
+        <state relative-caret-position="73">
+          <caret line="349" column="38" lean-forward="true" selection-start-line="349" selection-start-column="38" selection-end-line="349" selection-end-column="38" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../cloud/paper2/cost_sampling.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-150">
-          <caret line="11" column="46" lean-forward="true" selection-start-line="11" selection-start-column="46" selection-end-line="11" selection-end-column="46" />
-          <folding>
-            <element signature="e#0#21#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../cloud/paper3/sampling_agent.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="60" column="0" lean-forward="true" selection-start-line="60" selection-start-column="0" selection-end-line="60" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#21#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>

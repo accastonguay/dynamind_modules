@@ -202,7 +202,11 @@ class NewPresentValue(Module):
 
         try:
             initial_cost = self.__construction_cost_db[int(size)] + self.installation_cost + self.plumbing_cost + self.pump_cost
-            return initial_cost*self.__cpi[year]/self.__cpi[2010]
+            if year in self.__cpi:
+                return initial_cost*self.__cpi[year]/self.__cpi[2010]
+            else:
+                return initial_cost * (2.557 * year - 5042.6)/ self.__cpi[2010]
+
         except:
             raise LookupError("No such tank found")
 
@@ -214,13 +218,21 @@ class NewPresentValue(Module):
         """
         try:
             initial_cost = self.__construction_cost_db[int(size)] + (self.installation_cost + self.plumbing_cost)*self.add_cost_coeff
-            return initial_cost * self.__cpi[year] / self.__cpi[2010]
+            if year in self.__cpi:
+                return initial_cost * self.__cpi[year] / self.__cpi[2010]
+            else:
+                return initial_cost * (2.557 * year - 5042.6) / self.__cpi[2010]
+
         except:
             raise LookupError("No such tank found")
 
     def maintenance_costs_indoor(self, annual_savings, year):
-        mcost = self.maintenance_cost* self.__cpi[year] / self.__cpi[2010]
-        ecost = self.energy_cost* self.__cpi_energy[year] / self.__cpi_energy[2005]
+        if year in self.__cpi:
+            mcost = self.maintenance_cost* self.__cpi[year] / self.__cpi[2010]
+            ecost = self.energy_cost* self.__cpi_energy[year] / self.__cpi_energy[2005]
+        else:
+            mcost = self.maintenance_cost* (2.557 * year - 5042.6)/ self.__cpi[2010]
+            ecost = self.energy_cost* (7 * year - 14000) / self.__cpi_energy[2005]
         maintenance_cost = []
         opex = []
         savings = []
@@ -234,7 +246,11 @@ class NewPresentValue(Module):
         return sum(discount_maintenance_cost)
 
     def maintenance_costs_outdoor(self, year):
-        mcost = self.maintenance_cost * self.__cpi[year] / self.__cpi[2010]
+        if year in self.__cpi:
+            mcost = self.maintenance_cost * self.__cpi[year] / self.__cpi[2010]
+        else:
+            mcost = self.maintenance_cost * (2.557 * year - 5042.6) / self.__cpi[2010]
+
         # opex = []
         # savings = []
         maintenance_cost = []
@@ -335,7 +351,7 @@ class NewPresentValue(Module):
             elif year == 2004:
                 r.SetField("price", 0.7757)
                 r.SetField("level", 1)
-            elif year >= 2005:
+            elif 2014 >= year >= 2005:
                 if demand < 440:
                     price = self.__dict7[year]
                     r.SetField("price", price)
@@ -348,14 +364,37 @@ class NewPresentValue(Module):
                     price = self.__dict9[year]
                     r.SetField("price", price)
                     r.SetField("level", 3)
+            elif year >2014:
+                if demand < 440:
+                    price = 0.1998*year - 400
+                    r.SetField("price", price)
+                    r.SetField("level", 1)
+                elif 440 <= demand < 880:
+                    price = 0.1999*year - 400
+                    r.SetField("price", price)
+                    r.SetField("level", 2)
+                elif demand >= 880:
+                    price = 0.2501*year - 500
+                    r.SetField("price", price)
+                    r.SetField("level", 3)
+
             ann_total_water_usage = demand * 365 / 1000.
             water_usage_charge = ann_total_water_usage * price
-            water_supply_bill = water_usage_charge + self.__fixed_water_charge[year]
 
-            sewer_usage_charge = self.__sewer_price[year]*sewerage
-            sewer_bill=  sewer_usage_charge + self.__fixed_sewer_charge[year]
-            drainage_bill = self.__fixed_drainage_charge[year]
-            park_bill = self.__park_charge[year]
+            if year <= 2014:
+                water_supply_bill = water_usage_charge + self.__fixed_water_charge[year]
+                sewer_usage_charge = self.__sewer_price[year]*sewerage
+                sewer_bill=  sewer_usage_charge + self.__fixed_sewer_charge[year]
+                drainage_bill = self.__fixed_drainage_charge[year]
+                park_bill = self.__park_charge[year]
+            else:
+                water_supply_bill = water_usage_charge + (10.155*year + 50)
+                sewer_usage_charge = (0.1003*year - 200)*sewerage
+                sewer_bill=  sewer_usage_charge + (17.535*year - 35000)
+                drainage_bill = 4.4979 * year  - 8970.6
+                park_bill = 2.5341 * year - 5032.7
+
+
             total_water_bill = water_supply_bill + sewer_bill + drainage_bill + park_bill
 
             # Calculate WTP to avoid water restrictions

@@ -43,8 +43,14 @@ class mel_water_demand(Module):
             self.city.reset_reading()
 
             for c in self.city:
+
                 year = c.GetFieldAsInteger("year")
-                c.SetField("mel_leakage", self.__leakage[year])
-                c.SetField("mel_non_residential", self.__non_residential[year])
+
+                if year <= 2014:
+                    c.SetField("mel_leakage", self.__leakage[year])
+                    c.SetField("mel_non_residential", self.__non_residential[year])
+                else:
+                    c.SetField("mel_leakage", 42)
+                    c.SetField("mel_non_residential", 100)
 
             self.city.finalise()

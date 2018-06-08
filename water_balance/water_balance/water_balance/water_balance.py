@@ -84,7 +84,7 @@ class water_balance(Module):
 
                 rest = max(set(restriction_list), key=restriction_list.count)
 
-                new_dam_volume = storages[-1]
+                new_dam_volume = min(storages[-1], dam_full)
                 dam_percent = new_dam_volume/dam_full
                 c.SetField("dam_volume", new_dam_volume)
                 c.SetField("dam_percent", dam_percent)
