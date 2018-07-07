@@ -21,6 +21,7 @@ class inflow(Module):
             self.city = ViewContainer("city", COMPONENT, READ)
             self.city.addAttribute("year", Attribute.INT, READ)
             self.city.addAttribute("inflow", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("desal_cap", Attribute.DOUBLE, READ)
             self.city.addAttribute("inf_scenario", Attribute.INT, READ)
 
             #Compile views
@@ -41,6 +42,8 @@ class inflow(Module):
 
             for c in self.city:
                 year = c.GetFieldAsInteger("year")
+                desal = c.GetFieldAsDouble("desal_cap")
+
 
                 if year <= 2015:
                     c.SetField("inflow", dict[year])
@@ -48,15 +51,15 @@ class inflow(Module):
                     inf_scenario = c.GetFieldAsInteger("inf_scenario")
                     if inf_scenario == 1:
                         inflow = 500*(1-0.001022675)**(year-2015)
-                        inf = randrange(int(inflow - inflow*0.2),int(inflow + inflow*0.2))
+                        inf = randrange(int(inflow - inflow*0.2),int(inflow + inflow*0.2))+desal
                         c.SetField("inflow", inf)
                     elif inf_scenario == 2:
                         inflow = 500*(1-0.004132097)**(year-2015)
-                        inf = randrange(int(inflow - inflow*0.2),int(inflow + inflow*0.2))
+                        inf = randrange(int(inflow - inflow*0.3),int(inflow + inflow*0.3))+desal
                         c.SetField("inflow", inf)
                     elif inf_scenario == 3:
                         inflow = 500 * (1 -0.01463821) ** (year - 2015)
-                        inf = randrange(int(inflow - inflow * 0.2), int(inflow + inflow * 0.2))
+                        inf = randrange(int(inflow - inflow * 0.5), int(inflow + inflow * 0.5))+desal
                         c.SetField("inflow", inf)
 
             self.city.finalise()

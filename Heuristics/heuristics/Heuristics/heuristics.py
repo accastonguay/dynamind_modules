@@ -214,7 +214,6 @@ class Heuristics(Module):
             self.parcel.addAttribute("installation_year", Attribute.INT, WRITE)
             self.parcel.addAttribute("irrigation_demand", Attribute.DOUBLE, READ)
             self.parcel.addAttribute("irrigation_supply", Attribute.DOUBLE, WRITE)
-            self.parcel.addAttribute("lga", Attribute.STRING, READ)
             self.parcel.addAttribute("max_prob_technology", Attribute.STRING, READ)
             self.parcel.addAttribute("tn_removed", Attribute.DOUBLE, WRITE)
             self.parcel.addAttribute("new_impervious_catchment", Attribute.DOUBLE, READ)
@@ -240,7 +239,7 @@ class Heuristics(Module):
 
             self.city = ViewContainer("city", COMPONENT, READ)
 
-            self.city.addAttribute("budget", Attribute.DOUBLE, WRITE)
+            # self.city.addAttribute("budget", Attribute.DOUBLE, WRITE)
             self.city.addAttribute("budget_factor", Attribute.DOUBLE, READ)
             self.city.addAttribute("budget_source", Attribute.STRING, WRITE)
             self.city.addAttribute("const_cost_factor", Attribute.DOUBLE, READ)
@@ -258,8 +257,15 @@ class Heuristics(Module):
             self.city.addAttribute("rf_factor", Attribute.DOUBLE, READ)
             self.city.addAttribute("year", Attribute.INT, READ)
 
+
+            self.council = ViewContainer("council", COMPONENT, READ)
+            self.council.addAttribute("lga_name", Attribute.STRING, READ)
+            self.council.addAttribute("budget", Attribute.DOUBLE, WRITE)
+            self.council.addAttribute("agg_costs", Attribute.DOUBLE, WRITE)
+            self.council.addAttribute("remaining_budget", Attribute.DOUBLE, WRITE)
+
             #Compile views
-            views = [self.parcel, self.city]
+            views = [self.parcel, self.city, self.council]
             self.registerViewContainers(views)
 
         """
@@ -424,7 +430,7 @@ class Heuristics(Module):
                 if year < 2005:
                     offset = 0
                 elif year > 2013:
-                    offset = 7236
+                    offset = 460
                 else:
                     offset_dict={2005: 51, 2006: 51, 2007: 51, 2008: 51, 2009: 70, 2010: 70, 2011: 141, 2012: 141, 2013: 141}
                     offset = offset_dict[year]
@@ -442,6 +448,7 @@ class Heuristics(Module):
                 maint_cost_factor= c.GetFieldAsDouble("maint_cost_factor")
                 rf_factor = c.GetFieldAsDouble("rf_factor")
                 year = c.GetFieldAsInteger("year")
+                private_contribution = c.GetFieldAsDouble("private_contribution")
 
                 c.SetField("budget_source", self.budget_source)
                 c.SetField("cost_source", self.cost_source)
@@ -452,8 +459,34 @@ class Heuristics(Module):
                 c.SetField("lifespan_pond", self.lifespan_pond)
                 c.SetField("offset_scenario", self.offset_scenario)
                 c.SetField("offset_source", self.offset_source)
-
             self.city.finalise()
+
+            self.council.reset_reading()
+
+            for counc in self.council:
+                council_name = counc.GetFieldAsString("lga_name")
+                last_budget = counc.GetFieldAsDouble("remaining_budget")
+
+                if self.budget_source == "budget":
+                    counc.SetField("budget", self.__dict_budget[year])
+                elif self.budget_source == "costs":
+                    counc.SetField("budget", self.__dict_costs[year])
+                elif self.budget_source == "pvcosts":
+                    counc.SetField("budget", self.__dict_pvcosts[year])
+                elif self.budget_source == "Elwood":
+                    if council_name in self.__budget_elwood.keys():
+                        counc.SetField("budget", self.__budget_elwood[council_name][year])
+                    else:
+                        remaining_budget = 0
+                elif self.budget_source == "budget1":
+                    counc.SetField("budget", 250000)
+                elif self.budget_source == "budget2":
+                    counc.SetField("budget", 500000)
+                elif self.budget_source == "budget3":
+                    counc.SetField("budget", 1000000)
+                else:
+                    print "***Source chosen not in choices***"
+            self.council.finalise()
 
             self.parcel.reset_reading()
 
@@ -464,11 +497,10 @@ class Heuristics(Module):
 
                 area = p.GetFieldAsDouble("convertible_area")
                 block_id = p.GetFieldAsInteger("block_id")
-                council = p.GetFieldAsString("council")
                 impervious_catchment = p.GetFieldAsDouble("new_impervious_catchment")
                 irrigation_demand = p.GetFieldAsDouble("irrigation_demand")
                 landuse = p.GetFieldAsString("original_landuse")
-                lga = p.GetFieldAsString("lga")
+                lga = p.GetFieldAsString("council")
                 max_prob_technology = p.GetFieldAsString("max_prob_technology")
                 newlanduse = p.GetFieldAsString("new_landuse")
                 prob_rg = p.GetFieldAsDouble("prob_rg")
@@ -479,33 +511,28 @@ class Heuristics(Module):
                 zone_lu = p.GetFieldAsString("zone_lu")
 
                 if self.budget_source == "budget":
-                    remaining_budget = self.__dict_budget[year]- self.__totalCost[lga]
-                    c.SetField("budget", remaining_budget)
+                    remaining_budget = self.__dict_budget[year] - self.__totalCost[lga]
                 elif self.budget_source == "costs":
                     # print lga, self.__totalCost, year, self.__dict_costs
-                    remaining_budget = self.__dict_costs[year]- self.__totalCost[lga]
-                    c.SetField("budget", remaining_budget)
+                    remaining_budget = self.__dict_costs[year] - self.__totalCost[lga]
                 elif self.budget_source == "pvcosts":
-                    remaining_budget = self.__dict_pvcosts[year]- self.__totalCost[lga]
-                    c.SetField("budget", remaining_budget)
+                    remaining_budget = self.__dict_pvcosts[year] - self.__totalCost[lga]
                 elif self.budget_source == "Elwood":
                     if lga in self.__budget_elwood.keys():
                         budget = self.__budget_elwood[lga][year]
                         remaining_budget = budget - self.__totalCost[lga]
-                        c.SetField("budget", budget)
                     else:
                         remaining_budget = 0
                 elif self.budget_source == "budget1":
-                    budget = 250000
-                    c.SetField("budget", budget)
+                    remaining_budget = last_budget+250000 + private_contribution - self.__totalCost[lga]
                 elif self.budget_source == "budget2":
-                    budget = 500000
-                    c.SetField("budget", budget)
+                    remaining_budget = last_budget+500000 + private_contribution - self.__totalCost[lga]
                 elif self.budget_source == "budget3":
-                    budget = 1000000
-                    c.SetField("budget", budget)
+                    remaining_budget = last_budget+1000000 + private_contribution - self.__totalCost[lga]
                 else:
                     print "***Source chosen not in choices***"
+
+                # print "budget = ", remaining_budget
                 # Estimate runoff for current year
                 rainfall /= 1000.
                 runoff = rainfall * rf_factor * 0.9
@@ -583,7 +610,7 @@ class Heuristics(Module):
                             self.__totalBenefit[lga] += b
 
                             print technology, 'PVB, PVC, NPV: ', str(pvb_total), str(pvc), str(npv)
-                            print 'Council: ', council, 'Year: ' ,str(year), ' area: ' , str(area) ,'conArea: ' , str(conArea)
+                            print 'Council: ', lga, 'Year: ' ,str(year), ' area: ' , str(area) ,'conArea: ' , str(conArea)
                             print ' cost: ',str(cost), ' total cost: ', str(self.__totalCost[lga]), ' benefit: ', str(b)+' budget: ', str(remaining_budget)
 
                             # if a parcel in this block has had a wsud, add eia_treated to existing eia_treated,
@@ -594,8 +621,10 @@ class Heuristics(Module):
                                 blocks[block_id] = eia_treated
 
                 # Strategy 2: Whole budget is spent on most likely parcel
-                if decision_rule == 2 and released < 2000 and remaining_budget > 0:
+                # print decision_rule, released ,remaining_budget
 
+                if decision_rule == 2 and released < 2000 and remaining_budget > 0:
+                    # print "entered 1"
                     technology = max_prob_technology
 
                     # If a parcel within this block has already been converted, the impervious catchment already treated
@@ -618,7 +647,7 @@ class Heuristics(Module):
                     # if landuse has not yet been converted AND available area is larger than minimum area and landuse is suitable
                     if landuse == newlanduse and conArea >= self.__minArea[technology] and zone_lu in \
                             self.__suitable_zoneLu[technology]:
-                        'Criteria are met'
+                        # print "entered 2"
                         # define the area
                         conArea = round(conArea,2)
 
@@ -626,6 +655,7 @@ class Heuristics(Module):
                         opex = self.maint_cost(technology, conArea, year, self.cost_source) * maint_cost_factor
 
                         if cost <= remaining_budget:
+                            # print "entered 3"
                             eia_treated = conArea / self.design_curves(self.expected_removal, technology)
                             percent_treated = eia_treated / impervious_catchment
 
@@ -795,7 +825,7 @@ class Heuristics(Module):
                                     self.__totalCost[lga] += cost
                                 self.__totalBenefit[lga] += b
                                 print technology, 'PVB, PVC, NPV: ', str(pvb_total), str(pvc), str(npv)
-                                print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(conArea)
+                                print 'Council: ', lga, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(conArea)
                                 print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost[lga]), ' benefit: ', str(b) + ' budget: ', str(remaining_budget)
                                 # if a parcel in this block has had a wsud, add eia_treated to existing eia_treated,
                                 # otherwise add the to the new eia_treated
@@ -909,7 +939,7 @@ class Heuristics(Module):
                                     self.__totalCost[lga] += cost
                                 self.__totalBenefit[lga] += b
                                 print technology, 'PVB, PVC, NPV: ', str(pvb_total), str(pvc), str(npv)
-                                print 'Council: ', council, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
+                                print 'Council: ', lga, 'Year: ', str(year), ' area: ', str(area), 'conArea: ', str(
                                     conArea)
                                 print ' cost: ', str(cost), ' total cost: ', str(self.__totalCost[lga]), ' benefit: ', str(
                                     b) + ' budget: ', str(remaining_budget)
@@ -922,6 +952,15 @@ class Heuristics(Module):
                                 else:
                                     blocks[block_id] = eia_treated
 
-                # self.__totalCost[lga] = 0
-                # self.__totalBenefit[lga] = 0
+            self.__totalCost[lga] = 0
+            # self.__totalBenefit[lga] = 0
             self.parcel.finalise()
+
+            self.council.reset_reading()
+
+            for counc in self.council:
+                council_name = counc.GetFieldAsString("lga_name")
+                counc.SetField("agg_costs", self.__totalCost[council_name])
+                counc.SetField("remaining_budget", remaining_budget)
+
+            self.council.finalise()

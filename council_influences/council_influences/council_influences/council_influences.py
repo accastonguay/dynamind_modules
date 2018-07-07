@@ -101,25 +101,25 @@ class council_influences(Module):
             self.parcel.addAttribute("rainfall", Attribute.DOUBLE, READ)
 
 
-            self.council = ViewContainer("council", COMPONENT, READ)
-            self.council.addAttribute("const_cost_factor", Attribute.DOUBLE, READ)
-            self.council.addAttribute("maint_cost_factor", Attribute.DOUBLE, READ)
-            self.council.addAttribute("rf_factor", Attribute.DOUBLE, READ)
-            self.council.addAttribute("year", Attribute.INT, READ)
-            self.council.addAttribute("influence_rule", Attribute.INT, READ)
-            self.council.addAttribute("discount_rate", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("expected_removal", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("offset_source", Attribute.STRING, WRITE)
-            self.council.addAttribute("offset_scenario", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("lifespan_rg", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("lifespan_wetland", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("lifespan_pond", Attribute.DOUBLE, WRITE)
-            self.council.addAttribute("cost_source", Attribute.STRING, WRITE)
+            self.city = ViewContainer("city", COMPONENT, READ)
+            self.city.addAttribute("const_cost_factor", Attribute.DOUBLE, READ)
+            self.city.addAttribute("maint_cost_factor", Attribute.DOUBLE, READ)
+            self.city.addAttribute("rf_factor", Attribute.DOUBLE, READ)
+            self.city.addAttribute("year", Attribute.INT, READ)
+            self.city.addAttribute("influence_rule", Attribute.INT, READ)
+            self.city.addAttribute("discount_rate", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("expected_removal", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("offset_source", Attribute.STRING, WRITE)
+            self.city.addAttribute("offset_scenario", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("lifespan_rg", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("lifespan_wetland", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("lifespan_pond", Attribute.DOUBLE, WRITE)
+            self.city.addAttribute("cost_source", Attribute.STRING, WRITE)
 
 
 
             #Compile views
-            views = [self.parcel, self.council]
+            views = [self.parcel, self.city]
 
             #Register ViewContainer to stream
             self.registerViewContainers(views)
@@ -225,9 +225,9 @@ class council_influences(Module):
                 if year < 2005:
                     offset = 0
                 elif year > 2013:
-                    offset = 7236
+                    offset = 460
                 else:
-                    offset_dict={2005: 800, 2006: 800, 2007: 800, 2008: 800, 2009: 1100, 2010: 1100, 2011: 2225, 2012: 2225, 2013: 2225}
+                    offset_dict={2005: 51, 2006: 51, 2007: 51, 2008: 51, 2009: 70, 2010: 70, 2011: 141, 2012: 141, 2013: 141}
                     offset = offset_dict[year]
 
             elif source == "scenario":
@@ -240,8 +240,8 @@ class council_influences(Module):
         def run(self):
             #Data Stream Manipulation
 
-            self.council.reset_reading()
-            for c in self.council:
+            self.city.reset_reading()
+            for c in self.city:
                 influence_rule = c.GetFieldAsInteger("influence_rule")
                 const_cost_factor= c.GetFieldAsDouble("const_cost_factor")
                 maint_cost_factor= c.GetFieldAsDouble("maint_cost_factor")
@@ -259,7 +259,7 @@ class council_influences(Module):
                 c.SetField("lifespan_rg", self.lifespan_rg)
                 c.SetField("lifespan_wetland", self.lifespan_wetland)
                 c.SetField("lifespan_pond", self.lifespan_pond)
-            self.council.finalise()
+            self.city.finalise()
 
             self.parcel.reset_reading()
 
