@@ -44,21 +44,20 @@ class inflow(Module):
                 year = c.GetFieldAsInteger("year")
                 desal = c.GetFieldAsDouble("desal_cap")
 
-
                 if year <= 2015:
                     c.SetField("inflow", dict[year])
                 else:
                     inf_scenario = c.GetFieldAsInteger("inf_scenario")
                     if inf_scenario == 1:
-                        inflow = 500*(1-0.001022675)**(year-2015)
+                        inflow = 506*(1-0.0009204549)**(year-2015)
                         inf = randrange(int(inflow - inflow*0.2),int(inflow + inflow*0.2))+desal
                         c.SetField("inflow", inf)
                     elif inf_scenario == 2:
-                        inflow = 500*(1-0.004132097)**(year-2015)
+                        inflow = 506*(1-0.003719656)**(year-2015)
                         inf = randrange(int(inflow - inflow*0.3),int(inflow + inflow*0.3))+desal
                         c.SetField("inflow", inf)
                     elif inf_scenario == 3:
-                        inflow = 500 * (1 -0.01463821) ** (year - 2015)
+                        inflow = 506 * (1 -0.01318409) ** (year - 2015)
                         inf = randrange(int(inflow - inflow * 0.5), int(inflow + inflow * 0.5))+desal
                         c.SetField("inflow", inf)
 

@@ -77,8 +77,6 @@ class water_balance(Module):
 
                 year = c.GetFieldAsInteger("year")
 
-
-
                 restrictions = self.__restriction_scenarios[sc]
 
                 storages = []
@@ -102,15 +100,15 @@ class water_balance(Module):
                             restriction = 4
                         restriction_list.append(restriction)
                     else:
-                        if dam_percent > 0.5:
+                        if dam_percent >= 0.5:
                             restriction = 0
-                        elif 0.5 < dam_percent <=  0.45:
+                        elif 0.5 > dam_percent >=  0.45:
                             restriction = 1
-                        elif 0.45 < dam_percent <=  0.4:
+                        elif 0.45 > dam_percent >=  0.4:
                             restriction = 2
-                        elif 0.4 < dam_percent <= 0.3:
+                        elif 0.4 > dam_percent >= 0.3:
                             restriction = 3
-                        elif  dam_percent < 0.3:
+                        elif  dam_percent > 0.3:
                             restriction = 4
                         restriction_list.append(restriction)
 

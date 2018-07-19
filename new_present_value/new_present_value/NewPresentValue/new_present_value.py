@@ -388,7 +388,7 @@ class NewPresentValue(Module):
                 drainage_bill = self.__fixed_drainage_charge[year]
                 park_bill = self.__park_charge[year]
             else:
-                water_supply_bill = water_usage_charge + (10.155*year + 50)
+                water_supply_bill = water_usage_charge + (13.084*year - 26191)
                 sewer_usage_charge = (0.1003*year - 200)*sewerage
                 sewer_bill=  sewer_usage_charge + (17.535*year - 35000)
                 drainage_bill = 4.4979 * year  - 8970.6
