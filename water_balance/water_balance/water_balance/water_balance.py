@@ -44,7 +44,6 @@ class water_balance(Module):
             self.city.addAttribute("desal_delay", Attribute.INT, WRITE)
             self.city.addAttribute("year", Attribute.INT, READ)
 
-
             views = []
             views.append(self.city)
             self.registerViewContainers(views)
@@ -108,7 +107,7 @@ class water_balance(Module):
                             restriction = 2
                         elif 0.4 > dam_percent >= 0.3:
                             restriction = 3
-                        elif  dam_percent > 0.3:
+                        elif  dam_percent < 0.3:
                             restriction = 4
                         restriction_list.append(restriction)
 

@@ -960,7 +960,8 @@ class Heuristics(Module):
 
             for counc in self.council:
                 council_name = counc.GetFieldAsString("lga_name")
-                counc.SetField("agg_costs", self.__totalCost[council_name])
+                if council_name in self.__totalCost:
+                    counc.SetField("agg_costs", self.__totalCost[council_name])
                 counc.SetField("remaining_budget", remaining_budget)
 
             self.council.finalise()
